@@ -2,10 +2,10 @@
 
 $server = "localhost";
 // usuario: c2112119_vbd
-$user = "c2112119_vbd";
+$user = "root";
 // Contraseña: pnartcqsedn6Rzo
-$pass = "pnartcqsedn6Rzo";
-$db = "c2112119_vbd";
+$pass = "";
+$db = "sistema_vouchers";
 
 $conn = mysqli_connect($server, $user, $pass, $db);
 
