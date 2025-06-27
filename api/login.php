@@ -1,6 +1,14 @@
 <?php
 include '../Model/conexion.php';
 
+if (!$conn) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error de conexión a la base de datos: ' . mysqli_connect_error(),
+    ]);
+    exit();
+}
+
 // Obtener los datos del cuerpo de la solicitud
 $data = json_decode(file_get_contents("php://input"));
 $user = $data->user;

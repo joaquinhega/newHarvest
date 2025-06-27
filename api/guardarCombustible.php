@@ -10,7 +10,7 @@ session_start();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $id_remito = $data['id_remito'];
+    $id_remito = $data['id_remito_c'];
     $fecha = $data['fecha'];
     $monto = $data['monto'];
     $patente = $data['patente'];
@@ -21,8 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    $sql = "INSERT INTO combustible (id_remito_c, monto, fecha, patente, nombre, aprobado)
-            VALUES ('$id_remito','$monto','$fecha', '$patente', '$nombre', 0);";
+    // Verificar si el id_remito_c ya existe
+    $checkSql = "SELECT COUNT(*) as count FROM combustible WHERE id_remito_c = '$id_remito'";
+    $result = $conn->query($checkSql);
+    $row = $result->fetch_assoc();
+
+    if ($row['count'] > 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Error: El id_remito_c ya existe.']);
+        exit();
+    }
+
+    $sql = "INSERT INTO combustible (id_remito_c, monto, fecha, patente, nombre, aprobado, borrado)
+            VALUES ('$id_remito','$monto','$fecha', '$patente', '$nombre', 0, 0);";
 
     if ($conn->query($sql) === TRUE) {
         echo json_encode(['status' => 'success', 'message' => 'Remito guardado exitosamente.']);

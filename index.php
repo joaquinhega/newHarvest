@@ -16,7 +16,7 @@
             <label>Contraseña: </label>
             <input type="password" id="pass" name="pass"><br>
             <input class="buttom" type="submit" value="Entrar">
-            <?php if (isset($_GET['error'])): ?><!--Valida si se ingresaron datos-->
+            <?php if (isset($_GET['error'])): ?>
                 <div class="error-message">
                     <?php echo '<u>' . htmlspecialchars($_GET['error']) . '</u>'; ?>
                 </div>

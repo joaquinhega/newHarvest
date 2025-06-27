@@ -5,7 +5,7 @@ include '../Model/conexion.php';
 $user = $_SERVER['HTTP_USER'] ?? '';
 $letra = $_SERVER['HTTP_LETRA'] ?? '';
 
-$sql = "SELECT * FROM voucher WHERE SUBSTRING(id_Remito_v, 1, 1) = '$letra' AND borrado = 0 ORDER BY Fecha DESC";
+$sql = "SELECT * FROM voucher WHERE SUBSTRING(id_Remito_v, 1, 1) = '$letra' AND borrado = 0 AND aprobado = 0 ORDER BY id_remito_v DESC";
 $result = $conn->query($sql);
 
 $vouchers = [];

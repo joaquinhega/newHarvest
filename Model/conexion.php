@@ -10,7 +10,7 @@ $db = "sistema_vouchers";
 $conn = mysqli_connect($server, $user, $pass, $db);
 
 // Verificar conexión
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
+if (!$conn) {
+    die("Conexión fallida: " . mysqli_connect_error());
 }
 ?>
