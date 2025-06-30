@@ -9,7 +9,7 @@
 <body>
     <div class="login-container">
         <form class="login-form" method="POST" action="Controller/loguear.php">
-            <img src="logo-newHarvest.png" name="logo">
+            <img src="assets/logo-newHarvest.png" name="logo">
             <h2>Iniciar Sesión</h2>
             <label>Usuario: </label>
             <input type="text" id="user" name="user"><br>

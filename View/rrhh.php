@@ -14,15 +14,26 @@ if(!isset($_SESSION['user'])){
 </head>
 <body>
     <div class="rrhh-container">
-        <header>
-            <img src="../logo-newHarvest.png" alt="New Harvest Logo">
+        <header class="rrhh-header">
+            <img src="../assets/logo-newHarvest.png" alt="New Harvest Logo">
+            <h1>Panel de Administración RRHH</h1>
+            <a href="../Controller/cerrarSesion.php" class="logout-btn"><b>Cerrar Sesión</b></a>
         </header>
-        <div class="rrhh-botones">
-            <a href="rrhhVoucher.php"><button><b>VOUCHER</b></button></a><br>
-            <a href="rrhhCombustible.php"><button><b>COMBUSTIBLE</b></button></a><br>
-            <a href="listaEmpresa.php"><button><b>EMPRESA</b></button></a><br>
+
+        <div class="dashboard-cards">
+            <a href="rrhhVoucher.php" class="dashboard-card">
+                <div class="card-icon"></div> <h2>VOUCHER</h2>
+                <p>Gestión de vouchers de pago y beneficios.</p>
+            </a>
+            <a href="rrhhCombustible.php" class="dashboard-card">
+                <div class="card-icon"></div> <h2>COMBUSTIBLE</h2>
+                <p>Administración de registros y asignaciones de combustible.</p>
+            </a>
+            <a href="listaEmpresa.php" class="dashboard-card">
+                <div class="card-icon"></div> <h2>EMPRESA</h2>
+                <p>Configuración y gestión de datos de la empresa.</p>
+            </a>
         </div>
     </div>
-    <a href="../Controller/cerrarSesion.php"><button class="logout-btn"><b>Cerrar Sesión</b></button></a><br>
-    </body>
+</body>
 </html>

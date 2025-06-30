@@ -33,7 +33,7 @@ $resultVouchers = $conn->query($sql);
 <body>
     <div class="choferVer-container">
         <header>
-            <img src="../logo-newHarvest.png" alt="New Harvest Logo">
+            <img src="../assets/logo-newHarvest.png" alt="New Harvest Logo">
         </header>
         <div class="styled-table">
             <h2>Vouchers de <?php echo $_SESSION['nombre']; ?></h2>
@@ -61,8 +61,8 @@ $resultVouchers = $conn->query($sql);
                     <td><?= $row['tiempo_espera'] ?></td>
                     <td>
                         <div class="boton-acciones">
-                            <a href="../Model/editarVoucher.php?id_remito_v=<?= $row['id_remito_v'] ?>"><button id="boton-editar"><img src="../boton-editar.png" width="20px" height="20px"></button></a>
-                            <a href="../Model/eliminarVoucher.php?id_remito_v=<?= $row['id_remito_v'] ?>"><button id="boton-eliminar"><img src="../boton-eliminar.png" width="20px" height="20px"></button></a>
+                            <a href="../Model/editarVoucher.php?id_remito_v=<?= $row['id_remito_v'] ?>"><button id="boton-editar"><img src="../assets/boton-editar.png" width="20px" height="20px"></button></a>
+                            <a href="../Model/eliminarVoucher.php?id_remito_v=<?= $row['id_remito_v'] ?>"><button id="boton-eliminar"><img src="../assets/boton-eliminar.png" width="20px" height="20px"></button></a>
                         </div>
                     </td>
                 </tr>

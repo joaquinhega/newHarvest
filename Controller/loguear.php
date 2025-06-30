@@ -18,7 +18,7 @@ if ($array['contar'] > 0) {
     if ($_SESSION['rol'] == 'chofer') {
         header('Location: ../View/chofer.php');
     } else {
-        header('Location: ../View/rrhh.php');
+        header('Location: ../View/rrhhVoucher.php');
     }
     exit();
 } else {

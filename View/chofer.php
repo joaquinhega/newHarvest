@@ -15,7 +15,7 @@ if(!isset($_SESSION['user'])){
 <body>
     <div class="chofer-container">
         <header>
-            <img src="../logo-newHarvest.png" alt="New Harvest Logo">
+            <img src="../assets/logo-newHarvest.png" alt="New Harvest Logo">
         </header>
         <div class="chofer-botones">
             <a href="choferVoucher.php"><button><b>VOUCHER</b></button></a><br>

@@ -30,7 +30,7 @@ $nombreEmpresa = $resultEmpresa->fetch_assoc()['nombre'];?>
 <body>
     <div class="rrhh-container">
         <header>
-            <img src="../logo-newHarvest.png" alt="New Harvest Logo">
+            <img src="../assets/logo-newHarvest.png" alt="New Harvest Logo">
         </header>
         <div class="styled-table">
             <h2><?php echo $nombreEmpresa;?></h2>
