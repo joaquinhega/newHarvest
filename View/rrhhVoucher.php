@@ -45,7 +45,6 @@ if(!isset($_SESSION['user'])){
                         <th>Destino</th>
                         <th>Observaciones</th>
                         <th>Tiempo de espera</th>
-                        <th>Asignar Monto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -129,7 +128,64 @@ if(!isset($_SESSION['user'])){
                 triggerAprobados();
             }
         }
-
+        function initMiniModalMover() {
+            const modal = document.getElementById("mini-modal-mover");
+            if (!modal) return;
+            document.querySelectorAll(".btn-mover").forEach(btn => {
+                btn.onclick = function() {
+                    modal.style.display = "flex";
+                    document.getElementById("mini-modal-id-remito").value = this.dataset.id;
+                };
+            });
+            document.getElementById("close-mini-modal").onclick = function() {
+                modal.style.display = "none";
+            };
+            modal.onclick = function(e) {
+                if(e.target === this) this.style.display = "none";
+            };
+            document.getElementById("form-mover-voucher").onsubmit = function(e) {
+                var select = document.getElementById("mini-modal-select-empresa");
+                if(select.value === "desaprobar") {
+                    e.preventDefault();
+                    if(confirm("¿Seguro que deseas desaprobar este voucher?")) {
+                        var form = document.createElement("form");
+                        form.method = "post";
+                        form.action = "../Model/asignarEmpresa.php";
+                        var input1 = document.createElement("input");
+                        input1.type = "hidden";
+                        input1.name = "id_remito_v";
+                        input1.value = document.getElementById("mini-modal-id-remito").value;
+                        var input2 = document.createElement("input");
+                        input2.type = "hidden";
+                        input2.name = "id_empresa";
+                        input2.value = "desaprobar";
+                        form.appendChild(input1);
+                        form.appendChild(input2);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                } else {
+                    // Enviar por AJAX
+                    e.preventDefault();
+                    var formData = new FormData(this);
+                    fetch("../Model/asignarEmpresa.php", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Puedes mostrar un mensaje de éxito o recargar la tabla
+                        alert("Empresa asignada correctamente.");
+                        modal.style.display = "none";
+                        // Recargar la tabla de aprobados
+                        if (typeof triggerAprobados === "function") triggerAprobados();
+                    })
+                    .catch(() => {
+                        alert("Error al asignar empresa.");
+                    });
+                }
+            };
+        }
         // AJAX Filtering and Pagination Logic
         document.addEventListener('DOMContentLoaded', function() {
             // Get filter inputs for No Aprobados
@@ -186,6 +242,7 @@ if(!isset($_SESSION['user'])){
                                 loadVouchers(type, newPage, searchTerm, fechaDesde, fechaHasta, tbodyElement, paginationElement, reporteElement);
                             });
                         });
+                        initMiniModalMover();
                     }
                 };
                 xhr.send(
