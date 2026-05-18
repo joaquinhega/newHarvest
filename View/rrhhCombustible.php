@@ -77,7 +77,16 @@ if(!isset($_SESSION['user'])){
     </div>
 
     <script>
-        // Tab functionality
+        window.mostrarAlertaGlobal = function(mensaje, tipo = 'info') {
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert-global alert-${tipo}`;
+            alertBox.textContent = mensaje;
+            document.body.appendChild(alertBox);
+            setTimeout(() => {
+                alertBox.remove();
+            }, 3000); 
+        };
+
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
@@ -95,32 +104,95 @@ if(!isset($_SESSION['user'])){
             evt.currentTarget.className += " active";
             evt.currentTarget.setAttribute('aria-selected', 'true');
 
-            // Cargar los datos de la pestaña activa al cambiar
             if (tabName === 'no-aprobados') {
-                triggerNoAprobados();
+                if (window.triggerNoAprobados) window.triggerNoAprobados();
             } else if (tabName === 'aprobados') {
-                triggerAprobados();
+                if (window.triggerAprobados) window.triggerAprobados();
             }
         }
 
+        function handleApproveClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const idRemito = this.dataset.id;
+            if (!idRemito) return console.warn('[aprobar-btn] missing data-id');
+
+            if (!confirm('¿Seguro que quieres aprobar este registro?')) return false;
+
+            const rowElement = this.closest('tr');
+
+            fetch('../Model/aprobar_combustible.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: 'id=' + encodeURIComponent(idRemito)
+            })
+            .then(response => {
+                return response.text().then(text => ({ ok: response.ok, status: response.status, text }));
+            })
+            .then(({ ok, status, text }) => {
+                const resp = (text||'').trim();
+                if (ok && resp === 'OK') {
+                    mostrarAlertaGlobal('Remito aprobado exitosamente.', 'success');
+                    
+                    if (rowElement) {
+                        rowElement.style.transition = 'opacity 0.3s ease-out';
+                        rowElement.style.opacity = '0';
+                        setTimeout(() => {
+                            rowElement.remove();
+                        }, 300);
+                    }
+                    
+                    setTimeout(() => {
+                        if (typeof window.triggerNoAprobados === 'function') {
+                            window.triggerNoAprobados();
+                        }
+                        if (typeof window.triggerAprobados === 'function') {
+                            window.triggerAprobados();
+                        }
+                    }, 350);
+                } else {
+                    mostrarAlertaGlobal('Error al aprobar: ' + resp, 'error');
+                    console.error('[aprobar] status:', status, 'body:', resp);
+                }
+            })
+            .catch(err => {
+                mostrarAlertaGlobal('Error de conexión al aprobar remito.', 'error');
+                console.error('[aprobar] fetch error:', err);
+            });
+            return false;
+        }
+
+        function attachApproveListeners(tbodyElement) {
+            if (!tbodyElement) return;
+            const aprobarButtons = tbodyElement.querySelectorAll('.aprobar-btn');
+            aprobarButtons.forEach(button => {
+                try { button.type = 'button'; } catch(e){} 
+                if (button.tagName && button.tagName.toLowerCase() === 'a') {
+                    button.setAttribute('href', 'javascript:void(0)');
+                }
+                button.removeEventListener('click', handleApproveClick);
+                button.addEventListener('click', handleApproveClick);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // No Aprobados
             const filterNoAprobadosSearch = document.getElementById('filter-no-aprobados-search');
             const filterNoAprobadosDesde = document.getElementById('filter-no-aprobados-fecha-desde');
             const filterNoAprobadosHasta = document.getElementById('filter-no-aprobados-fecha-hasta');
             const tbodyNoAprobados = document.getElementById('tbody-no-aprobados');
             const paginationNoAprobados = document.getElementById('pagination-no-aprobados');
+            const reporteNoAprobados = document.getElementById('reporte-no-aprobados');
 
-            // Aprobados
             const filterAprobadosSearch = document.getElementById('filter-aprobados-search');
             const filterAprobadosDesde = document.getElementById('filter-aprobados-fecha-desde');
             const filterAprobadosHasta = document.getElementById('filter-aprobados-fecha-hasta');
             const tbodyAprobados = document.getElementById('tbody-aprobados');
             const paginationAprobados = document.getElementById('pagination-aprobados');
+            const reporteAprobados = document.getElementById('reporte-aprobados');
 
             function loadCombustible(type, page, searchTerm, fechaDesde, fechaHasta, tbodyElement, paginationElement, reporteElement = null) {
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'filtrarCombustible.php', true);
+                xhr.open('POST', '../Controller/filtrarCombustible.php', true);
                 xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                 xhr.onload = function() {
                     if (this.status === 200) {
@@ -130,7 +202,7 @@ if(!isset($_SESSION['user'])){
                         if (reporteElement && typeof response.totalRecords !== "undefined") {
                             reporteElement.textContent = `Cantidad de remitos: ${response.totalRecords}`;
                         }
-                        // Paginación
+                        
                         paginationElement.querySelectorAll('.page-link').forEach(link => {
                             link.addEventListener('click', function(e) {
                                 e.preventDefault();
@@ -138,7 +210,14 @@ if(!isset($_SESSION['user'])){
                                 loadCombustible(type, newPage, searchTerm, fechaDesde, fechaHasta, tbodyElement, paginationElement, reporteElement);
                             });
                         });
+
+                        if (type === 'noaprobados') {
+                            attachApproveListeners(tbodyElement); 
+                        }
                     }
+                };
+                xhr.onerror = function() {
+                    console.error('[loadCombustible] Network error during combustible load.');
                 };
                 xhr.send(
                     `tipo=${type}` +
@@ -158,7 +237,7 @@ if(!isset($_SESSION['user'])){
                     filterNoAprobadosHasta.value,
                     tbodyNoAprobados,
                     paginationNoAprobados,
-                    document.getElementById('reporte-no-aprobados')
+                    reporteNoAprobados
                 );
             }
             filterNoAprobadosSearch.addEventListener('input', () => triggerNoAprobados(1));
@@ -174,16 +253,18 @@ if(!isset($_SESSION['user'])){
                     filterAprobadosHasta.value,
                     tbodyAprobados,
                     paginationAprobados,
-                    document.getElementById('reporte-aprobados')
+                    reporteAprobados
                 );
             }
             filterAprobadosSearch.addEventListener('input', () => triggerAprobados(1));
             filterAprobadosDesde.addEventListener('change', () => triggerAprobados(1));
             filterAprobadosHasta.addEventListener('change', () => triggerAprobados(1));
 
-            // Carga inicial
             triggerNoAprobados();
-            triggerAprobados();
+            triggerAprobados(); 
+            
+            window.triggerNoAprobados = triggerNoAprobados;
+            window.triggerAprobados = triggerAprobados;
         });
     </script>
 </body>

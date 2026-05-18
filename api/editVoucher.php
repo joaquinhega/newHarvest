@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include '../Model/conexion.php';
-
+include_once 'cors.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['id_remito_v'])) {
@@ -10,8 +10,6 @@ if (!isset($data['id_remito_v'])) {
 }
 
 $id_remito_v = $data['id_remito_v'];
-
-echo json_encode(["message" => "Back Editando voucher con ID: $id_remito_v"]);
 
 $sql = "UPDATE voucher 
         SET Empresa = ?, nombre_pasajero = ?, Origen = ?, hora_origen = ?, Destino = ?, hora_destino = ?, Fecha = ?, observaciones = ?, tiempo_espera = ? 
@@ -38,7 +36,6 @@ $stmt->bind_param("ssssssssss",
 );
 
 if ($stmt->execute()) {
-    // Verificar cuántas filas fueron afectadas
     if ($stmt->affected_rows > 0) {
         echo json_encode(["message" => "Voucher actualizado correctamente"]);
     } else {

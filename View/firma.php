@@ -4,7 +4,6 @@ if(!isset($_SESSION['user'])){
     header('Location: ../index.php');
     exit();
 }
-# Obtiene valores del formulario anterior para cargar toda la data junta
 $id_remito = $_POST['id_remito'];
 $empresa = $_POST['empresa'];
 $origen = $_POST['origen'];
@@ -56,14 +55,12 @@ $nombre_pasajero = isset($_GET['nombre_pasajero']) ? $_GET['nombre_pasajero'] : 
             <button id="clear" type="button">Limpiar</button>
             <button id="null-signature" type="button">Cargar sin Firma</button>
         </form>
-        <!-- Si vuelve, se lleva los valores del formulario para que no se borren -->
         <a href="choferVoucher.php?id_remito=<?php echo urlencode($id_remito); ?>&empresa=<?php echo urlencode($empresa); ?>&origen=<?php echo urlencode($origen); ?>&hora_origen=<?php echo urlencode($hora_origen); ?>&destino=<?php echo urlencode($destino); ?>&hora_destino=<?php echo urlencode($hora_destino); ?>&tiempo_espera=<?php echo urlencode($tiempo_espera); ?>&fecha=<?php echo urlencode($fecha); ?>&observaciones=<?php echo urlencode($observaciones); ?>">
         <button type="button" class="boton-volver">Volver</button></a>
         </div>
     </div>
 
 <script>
-    // Espacio de trabajo de firma, guarda el dibujo o lo limpia (con JS)
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas);
     var signatureDataInput = document.getElementById('signature-data');

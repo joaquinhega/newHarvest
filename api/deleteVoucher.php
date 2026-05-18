@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include '../Model/conexion.php';
-
+include_once 'cors.php';
 $data = json_decode(file_get_contents("php://input"), true);
 if (!isset($data['id_remito_v'])) {
     echo json_encode(["error" => "ID de voucher requerido"]);

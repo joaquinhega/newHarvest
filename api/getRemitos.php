@@ -1,12 +1,19 @@
 <?php
 header("Content-Type: application/json");
 include '../Model/conexion.php';
+include_once 'cors.php';
 
-$nombre = $_SERVER['HTTP_NOMBRE'];
+$rawInput = file_get_contents("php://input");
+$input = json_decode($rawInput, true);
 
-$sql = "SELECT * FROM combustible WHERE nombre = ? AND aprobado = 0 AND borrado = 0 ORDER BY Fecha DESC";
+$nombre = isset($_SERVER['HTTP_NOMBRE']) ? $_SERVER['HTTP_NOMBRE'] : '';
+$page = isset($input['page']) ? intval($input['page']) : 1;
+$limit = isset($input['limit']) ? intval($input['limit']) : 100;
+$offset = ($page - 1) * $limit;
+
+$sql = "SELECT * FROM combustible WHERE nombre = ? AND borrado = 0 ORDER BY Fecha DESC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $nombre);
+$stmt->bind_param("sii", $nombre, $limit, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
 

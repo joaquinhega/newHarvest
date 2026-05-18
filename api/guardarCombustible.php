@@ -1,16 +1,16 @@
 <?php
-header("Access-Control-Allow-Origin: *"); // Permitir acceso desde cualquier origen
-header("Content-Type: application/json; charset=UTF-8"); // Tipo de contenido JSON
-header("Access-Control-Allow-Methods: POST"); // Solo permitir POST
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Permitir ciertos headers
+header("Access-Control-Allow-Origin: *"); 
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: POST"); 
+header("Access-Control-Allow-Headers: Content-Type, Authorization"); 
 
 include '../Model/conexion.php';
 session_start();
-
+include_once 'cors.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $id_remito = $data['id_remito_c'];
+    $id_remito = $data['id'];
     $fecha = $data['fecha'];
     $monto = $data['monto'];
     $patente = $data['patente'];
@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Verificar si el id_remito_c ya existe
     $checkSql = "SELECT COUNT(*) as count FROM combustible WHERE id_remito_c = '$id_remito'";
     $result = $conn->query($checkSql);
     $row = $result->fetch_assoc();

@@ -2,8 +2,11 @@
 include 'conexion.php';
 session_start();
 
+error_log("===> asignarEmpresa.php llamado: " . json_encode($_POST));
+
 if (!isset($_SESSION['user'])) {
-    header('Location: ../index.php');
+    error_log("===> ERROR: Sesión no iniciada");
+    echo "ERROR: Sesión no iniciada";
     exit();
 }
 
@@ -11,25 +14,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_remito_v']) && iss
     $id = $conn->real_escape_string($_POST['id_remito_v']);
     $id_empresa = $_POST['id_empresa'];
 
+    error_log("===> id_remito_v: $id | id_empresa: $id_empresa");
+
     if ($id_empresa === 'desaprobar') {
-        // Desaprobar: quitar empresa y poner aprobado en 0
         $sql = "UPDATE voucher SET aprobado = 0, id_empresa = NULL, Monto = NULL WHERE id_remito_v='$id'";
+        error_log("===> SQL desaprobar: $sql");
     } else if (is_numeric($id_empresa) && $id_empresa > 0) {
-        // Asignar empresa
         $id_empresa = $conn->real_escape_string($id_empresa);
         $sql = "UPDATE voucher SET id_empresa = '$id_empresa' WHERE id_remito_v='$id'";
+        error_log("===> SQL asignar: $sql");
     } else {
-        echo "<script>alert('id_empresa ingresado invalido'); window.location.href='../View/rrhhVoucher.php';</script>";
+        error_log("===> ERROR: id_empresa ingresado invalido");
+        echo "ERROR: id_empresa ingresado invalido";
         exit;
     }
 
     if ($conn->query($sql) === TRUE) {
-        echo "<script>alert('Voucher guardado exitosamente.'); window.location.href='../View/rrhhVoucher.php';</script>";
+        error_log("===> OK: Empresa asignada/desaprobada correctamente");
+        echo "OK";
     } else {
-        echo "<script>alert('Error: " . $conn->error . "'); window.location.href='../View/rrhhVoucher.php';</script>";
+        error_log("===> ERROR SQL: " . $conn->error);
+        echo "ERROR: " . $conn->error;
     }
 } else {
-    header('Location: ../View/rrhhVoucher.php');
+    error_log("===> ERROR: Datos incompletos");
+    echo "ERROR: Datos incompletos";
     exit();
 }
 

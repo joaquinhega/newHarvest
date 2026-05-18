@@ -1,5 +1,4 @@
 <?php 
-# Mismas observaciones que en choferVoucher.php
 include '../Model/RemitoC.php'; 
 include '../Model/conexion.php';
 

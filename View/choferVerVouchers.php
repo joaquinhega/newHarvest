@@ -24,7 +24,7 @@ $resultVouchers = $conn->query($sql);
         function toggleViewMore() {
             const urlParams = new URLSearchParams(window.location.search);
             const currentLimit = urlParams.get('limit') || 10;
-            const newLimit = currentLimit == 10 ? 1000 : 10; // Cambia entre 10 y 1000 registros (o todos).
+            const newLimit = currentLimit == 10 ? 1000 : 10;
             urlParams.set('limit', newLimit);
             window.location.search = urlParams.toString();
         }

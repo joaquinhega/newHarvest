@@ -10,22 +10,22 @@ body {
     min-height: 100vh;
     padding-top: 0;
 }
-header { /* This general header rule is less specific and should be placed *before* .main-header */
-    background-color: #A2549F; /* Default background if .main-header isn't used */
+header {
+    background-color: #A2549F; 
     color: white;
     width: 100%;
     padding: 20px;
     text-align: center;
-    position: fixed; /* Keep for other non-main headers if they exist */
+    position: fixed; 
     top: 0;
     left: 0;
-    z-index: 999; /* Lower z-index than .main-header */
+    z-index: 999;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 header img {
     max-width: 150px;
 }
-.logout-btn{ /* This class seems to be for a different logout button, not the header one */
+.logout-btn{ 
     background-color: #D9534F;
     color: #fff;
     width: 150px;
@@ -36,36 +36,36 @@ header img {
     position: absolute;
     bottom: 0;
     left: 0;
-    border: none; /* Ensure no border */
+    border: none;
 }
 
-/* --- Header global (Specific styles for .main-header) --- */
+/* --- Header global  --- */
 .main-header {
     width: 100%;
-    background-color: #6A3D63; /* A rich, deep corporate purple */
+    background-color: #6A3D63;
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 40px; /* Increased vertical padding for more prominence */
-    min-height: 80px; /* Slightly taller header */
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2); /* Stronger, softer shadow for significant depth */
-    position: sticky; /* Keeps header visible on scroll */
-    top: 0; /* Sticks to the top */
-    z-index: 1000; /* Ensures header is on top of other content */
-    border-bottom: 3px solid #8A4D9B; /* A subtle, vibrant bottom border for a "pop" */
+    padding: 10px 40px; 
+    min-height: 80px; 
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2); 
+    position: sticky;
+    top: 0; 
+    z-index: 1000; 
+    border-bottom: 3px solid #8A4D9B;
 }
 
 .header-logo {
-    max-width: 160px; /* Larger logo */
+    max-width: 160px; 
     height: auto;
-    margin-right: 40px; /* More space from nav */
-    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); /* Subtle shadow for the logo */
+    margin-right: 40px; 
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); 
 }
 
 .header-nav {
     display: flex;
-    gap: 35px; /* More space between links */
+    gap: 35px; 
     flex: 1;
     justify-content: center;
 }
@@ -73,50 +73,49 @@ header img {
 .header-link {
     color: #fff;
     text-decoration: none;
-    font-size: 1.15em; /* Slightly larger text */
+    font-size: 1.15em; 
     font-weight: 500;
-    padding: 10px 22px; /* Increased padding */
-    border-radius: 8px; /* More rounded corners */
-    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* Enhanced transitions */
+    padding: 10px 22px;
+    border-radius: 8px; 
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; 
     position: relative;
     overflow: hidden;
-    letter-spacing: 0.5px; /* Slight letter spacing for corporate look */
+    letter-spacing: 0.5px; 
 }
 
 .header-link:hover {
-    background: rgba(255, 255, 255, 0.25); /* More visible overlay on hover */
-    transform: translateY(-3px); /* More pronounced lift */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Shadow on hover */
+    background: rgba(255, 255, 255, 0.25); 
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
 }
 
 .header-link.active {
-    background: #8A4D9B; /* Brighter purple for active link */
-    font-weight: 700; /* Bolder active link */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4); /* Stronger shadow for active state */
-    transform: scale(1.05); /* Slightly scales up the active link */
-    border: 1px solid #C5E1A5; /* A subtle, contrasting border for active link (light green/corporate) */
+    background: #8A4D9B;
+    font-weight: 700; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transform: scale(1.05);
 }
 
 .logout-btn-header {
-    background-color: #E57373; /* A softer, more inviting red */
+    background-color: #E57373;
     color: #fff;
-    border: none; /* Crucial: Remove default button borders */
-    padding: 12px 25px; /* Larger padding */
-    border-radius: 25px; /* Pill shape for a modern touch */
+    border: none; 
+    padding: 12px 25px; 
+    border-radius: 25px; 
     cursor: pointer;
     font-size: 1.05em;
     text-decoration: none;
-    margin-left: 40px; /* More space */
+    margin-left: 40px; 
     transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     display: inline-block;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2); /* Initial shadow */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
     font-weight: 600;
 }
 
 .logout-btn-header:hover {
-    background-color: #EF5350; /* Brighter red on hover */
-    transform: translateY(-3px) scale(1.02); /* More pronounced lift and slight scale */
-    box-shadow: 0 6px 15px rgba(0,0,0,0.35); /* More pronounced shadow */
+    background-color: #EF5350; 
+    transform: translateY(-3px) scale(1.02); 
+    box-shadow: 0 6px 15px rgba(0,0,0,0.35); 
 }
 
 .logout-btn-header:active {
@@ -124,21 +123,20 @@ header img {
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-/* General button border reset - important for all buttons */
-button, input[type="submit"] { /* Added input[type="submit"] to cover more buttons */
+button, input[type="submit"] { 
     border: none;
-    outline: none; /* Remove outline on focus for a cleaner look */
-    cursor: pointer; /* Ensure pointer cursor for all interactive buttons */
+    outline: none; 
+    cursor: pointer;
 }
-
 
 /* ----------- login.css ----------- */
 .login-container {
     background-color: #ffffff;
     color: #333;
     padding: 40px;
-    width: 450px;
-    margin: 0 auto;
+    width: 90%;
+    max-width: 450px;
+    margin: 50px auto; 
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -357,7 +355,7 @@ input[type="password"] {
     color: white;
 }
 
-.rrhh-header .logout-btn { /* This rule targets .logout-btn inside .rrhh-header */
+.rrhh-header .logout-btn { 
     background-color: #D9534F;
     color: white;
     border: none;
@@ -425,8 +423,6 @@ input[type="password"] {
     line-height: 1.5;
 }
 
-
-/* Existing RRHH styles (keep if still used elsewhere, adapt as needed) */
 .rrhh-botones button {
     background-color: #6A3D63;
     color: #fff;
@@ -463,7 +459,7 @@ input[type="password"] {
 .rrhh-container input[type="submit"], .choferVer-container input[type="submit"]{
     background-color: #6a1b9a;
     color: white;
-    border: none; /* Ensure no border */
+    border: none; 
     padding: 8px 10px;
     cursor: pointer;
     border-radius: 5px;
@@ -479,7 +475,7 @@ input[type="password"] {
 .rrhh-container table button, .choferVer-container table button{
     background-color: #6a1b9a;
     color: white;
-    border: none; /* Ensure no border */
+    border: none; 
     padding: 8px 8px;
     cursor: pointer;
     border-radius: 5px;
@@ -544,6 +540,22 @@ input[type="password"] {
     min-width: 120px;
     max-width: 160px;
 }
+.alert-global {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: white;
+    z-index: 9999;
+    opacity: 0.9;
+    transition: opacity 0.5s ease-in-out;
+    min-width: 250px;
+    text-align: center;
+}
+.alert-success { background-color: green; }
+.alert-error { background-color: red; }
+.alert-info { background-color: blue; }
 
 /* ----------- firma.css ----------- */
 canvas {
@@ -555,7 +567,6 @@ canvas {
     width: 95%;
     max-width: 400px;
 }
-/* Modal styles (keep your existing modal styles or adjust as needed) */
 body.modal-open {
     overflow: hidden !important;
     touch-action: none;
@@ -582,7 +593,7 @@ body.modal-open {
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
     position: relative;
     text-align: center;
-    z-index: 10000; /* Más alto que el modal por si acaso */
+    z-index: 10000; 
 
 }
 .modal-content h2 {
@@ -641,7 +652,7 @@ body.modal-open {
 }
 
 .modal-content form input[type="text"] {
-    width: calc(100% - 20px); 
+    width: calc(100% - 20px);
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #ddd;
@@ -729,7 +740,7 @@ body.modal-open {
 .card-body {
     padding: 15px;
     text-align: center;
-    flex-grow: 1; 
+    flex-grow: 1;
 }
 
 .card-body p {
@@ -749,7 +760,7 @@ body.modal-open {
 }
 
 .btn-edit {
-    background-color: #28a745; /* Green for edit */
+    background-color: #28a745; 
     color: white;
     border: 1px solid #28a745;
 }
@@ -759,7 +770,7 @@ body.modal-open {
 }
 
 .btn-delete {
-    background-color: #dc3545; /* Red for delete */
+    background-color: #dc3545; 
     color: white;
     border: 1px solid #dc3545;
 }
@@ -793,7 +804,7 @@ body.modal-open {
     font-size: 1em;
     width: 200px;
 }
-.filter-section input[type="search"], 
+.filter-section input[type="search"],
 .filter-section input[type="date"] {
     padding: 7px 10px;
     border-radius: 5px;
@@ -837,26 +848,27 @@ body.modal-open {
 .rrhh-container tr:nth-child(even) td {
     background: #f7f5fb;
 }
-        .alerta {
-            margin: 24px auto 0 auto;
-            max-width: 400px;
-            padding: 14px 20px;
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 500;
-            text-align: center;
-            box-shadow: 0 2px 8px #0001;
-        }
-        .alerta.success {
-            background: #e8f5e9;
-            color: #388e3c;
-            border: 1px solid #a5d6a7;
-        }
-        .alerta.error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-        }
+.alerta {
+    display: block;
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    max-width: 90vw;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    z-index: 99999;
+    background: #753C83;
+    color: #fff;
+    box-shadow: 0 4px 24px #0002;
+    text-align: center;
+    opacity: 0.97;
+    transition: opacity 0.3s;
+}
+.alerta.success { background: #28a745; color: #fff; }
+.alerta.error   { background: #d9534f; color: #fff; }
 
 /* ----------- Responsive Design ----------- */
 
@@ -895,6 +907,7 @@ body.modal-open {
     .login-container{
         width: 90%;
         padding: 30px;
+        margin: 20px auto; 
     }
     .login-container h2 {
         font-size: 24px;
@@ -1057,14 +1070,13 @@ body.modal-open {
         text-align: left;
     }
 }
-/* Estilos para Pestañas (Tabs) */
 .tabs-container {
     display: flex;
     gap: 0;
-    justify-content: center; /* Centra los botones de las pestañas */
+    justify-content: center; 
     margin-bottom: 30px;
     border-bottom: 2px solid #ccc;
-    padding-bottom: 5px; /* Espacio entre los botones y la línea inferior */
+    padding-bottom: 5px; 
 }
 
 .tab-button {
@@ -1077,7 +1089,7 @@ body.modal-open {
     font-size: 17px;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    margin: 0 5px; /* Espacio entre botones */
+    margin: 0 5px; 
     color: #333;
     border-radius: 10px 10px 0 0;
     font-weight: bold;
@@ -1089,7 +1101,7 @@ body.modal-open {
 }
 
 .tab-button.active {
-    background-color: #6c47a6; /* Color primario */
+    background-color: #6c47a6; 
     color: white;
     border-bottom: 2px solid #6c47a6;
 }
@@ -1098,8 +1110,8 @@ body.modal-open {
 .tab-content {
     display: none;
     padding: 20px 0;
-    border: 1px solid #ddd; 
-    border-top: none; 
+    border: 1px solid #ddd;
+    border-top: none;
     background-color: #fff;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
@@ -1117,7 +1129,7 @@ body.modal-open {
 
 /* Espacio y separación para las secciones */
 h2 {
-    margin-top: 40px; 
+    margin-top: 40px;
     margin-bottom: 20px;
     color: #333;
     border-bottom: 1px solid #eee;
@@ -1154,9 +1166,29 @@ h2 {
     transition: background-color 0.3s, color 0.3s;
     font-weight: bold;
     transition: background 0.2s, color 0.2s;
-
+}
+.pagination-controls .page-link {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #753C83; 
+    background-color: #fff;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    min-width: 30px;
+    text-align: center;
 }
 
+.pagination-controls .page-link.active-page {
+    background-color: #753C83; 
+    color: white;
+    border-color: #753C83;
+}
+
+.pagination-controls .page-link:hover:not(.active-page) {
+    background-color: #E6E0EA;
+    border-color: #753C83;
+}
 .page-link:hover {
     background-color: #e9ecef;
 }
@@ -1188,7 +1220,7 @@ h2 {
         flex-direction: column;
         align-items: stretch;
     }
-    .filter-section input[type="search"], 
+    .filter-section input[type="search"],
     .filter-section input[type="date"] {
         margin-bottom: 10px;
         width: 100%;

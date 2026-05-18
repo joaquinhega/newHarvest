@@ -13,7 +13,6 @@ if (!$id) {
     exit();
 }
 
-// Obtener nombre de la empresa
 $sqlEmpresa = "SELECT nombre FROM empresa WHERE id_empresa = '$id' AND borrado = 0";
 $resultEmpresa = $conn->query($sqlEmpresa);
 $empresa = $resultEmpresa->fetch_assoc();
@@ -32,6 +31,38 @@ if (!$empresa) {
     .modal { display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); justify-content:center; align-items:center; }
     .modal-content { background:#fff; padding:24px 18px 18px 18px; border-radius:8px; min-width:260px; max-width:90vw; box-shadow:0 8px 32px #0002; position:relative; }
     .modal-content .close { position:absolute; right:12px; top:8px; font-size:1.5em; cursor:pointer; }
+
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+        gap: 8px; 
+    }
+
+    .pagination-controls .page-link {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #753C83;
+        background-color: #fff;
+        transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        min-width: 30px; 
+        text-align: center;
+    }
+
+    .pagination-controls .page-link.active-page {
+        background-color: #753C83; 
+        color: white;
+        border-color: #753C83;
+    }
+
+    .pagination-controls .page-link:hover:not(.active-page) {
+        background-color: #E6E0EA;
+        border-color: #753C83; 
+    }
     </style>
 </head>
 <body>
@@ -54,6 +85,7 @@ if (!$empresa) {
                     <tr>
                         <th>Fecha</th>
                         <th>ID Remito</th>
+                        <th>Chofer</th>
                         <th>Pasajero</th>
                         <th>Origen</th>
                         <th>Destino</th>
@@ -70,25 +102,24 @@ if (!$empresa) {
         <a href="listaEmpresa.php"><button class="logout-btn">Volver</button></a>
     </div>
 
-<!-- Modal para ingresar/modificar monto -->
-<div id="modalMonto" class="modal">
-  <div class="modal-content" style="background:#fff; padding:24px 18px 18px 18px; border-radius:8px; width:50%; box-shadow:0 8px 32px #0002; position:relative;">
-    <span class="close" onclick="cerrarModalMonto()" style="position:absolute; right:12px; top:8px; font-size:1.5em; cursor:pointer;">&times;</span>
-    <h2 style="color:#6A3D63;">Asignar/Modificar Monto</h2>
-    <form id="formMontoVoucher">
-      <input type="hidden" name="id_remito_v" id="modalMontoIdRemito">
-      <label for="modalMontoInput" style="font-weight:bold; margin-bottom:5px; display:block;">Monto ($):</label>
-      <input type="number" min="0" step="1" name="monto" id="modalMontoInput" required
-        style="width:170px; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; font-size:1em;">
-      <div style="display:flex; justify-content:center; gap:15px;">
-        <button type="button" onclick="cerrarModalMonto()" style="background-color:#D9534F; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:1em; cursor:pointer;">Cancelar</button>
-        <button type="submit" style="background-color:#753C83; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:1em; cursor:pointer;">Generar PDF</button>
-      </div>
-    </form>
-  </div>
-</div>
+    <div id="modalMonto" class="modal">
+        <div class="modal-content" style="background:#fff; padding:24px 18px 18px 18px; border-radius:8px; width:50%; box-shadow:0 8px 32px #0002; position:relative;">
+            <span class="close" onclick="cerrarModalMonto()" style="position:absolute; right:12px; top:8px; font-size:1.5em; cursor:pointer;">&times;</span>
+            <h2 style="color:#6A3D63;">Asignar/Modificar Monto</h2>
+            <form id="formMontoVoucher">
+            <input type="hidden" name="id_remito_v" id="modalMontoIdRemito">
+            <label for="modalMontoInput" style="font-weight:bold; margin-bottom:5px; display:block;">Monto ($):</label>
+            <input type="number" min="0" step="1" name="monto" id="modalMontoInput" required
+                style="width:170px; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:4px; font-size:1em;">
+            <div style="display:flex; justify-content:center; gap:15px;">
+                <button type="button" onclick="cerrarModalMonto()" style="background-color:#D9534F; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:1em; cursor:pointer;">Cancelar</button>
+                <button type="submit" style="background-color:#753C83; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:1em; cursor:pointer;">Generar PDF</button>
+            </div>
+            </form>
+        </div>
+    </div>
 
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         const idEmpresa = document.getElementById('filtro-id-empresa').value;
         const searchInput = document.getElementById('filtro-empresa-search');
@@ -100,7 +131,7 @@ if (!$empresa) {
 
         function loadVouchers(page = 1) {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'filtrarVouchers.php', true);
+            xhr.open('POST', '../Controller/filtrarVouchers.php', true);
             xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             xhr.onload = function() {
                 if (this.status === 200) {
@@ -117,7 +148,6 @@ if (!$empresa) {
                         });
                     });
 
-                    // Botones PDF
                     document.querySelectorAll('.btn-monto-pdf').forEach(btn => {
                         btn.onclick = function() {
                             abrirModalMonto(this.getAttribute('data-id'), this.getAttribute('data-monto'));
@@ -140,7 +170,6 @@ if (!$empresa) {
 
         loadVouchers();
 
-        // Modal monto
         window.abrirModalMonto = function(id_remito, montoActual) {
             document.getElementById('modalMontoIdRemito').value = id_remito;
             document.getElementById('modalMontoInput').value = (montoActual && montoActual !== 'null') ? montoActual : '';
@@ -154,13 +183,12 @@ if (!$empresa) {
             e.preventDefault();
             var id_remito = document.getElementById('modalMontoIdRemito').value;
             var monto = document.getElementById('modalMontoInput').value;
-            // Actualiza el monto en la BBDD antes de generar el PDF
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '../Model/setMontoVoucher.php', true);
-            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                if (xhr.status === 200 && xhr.responseText === 'OK') {
-                    // Generar PDF (abre en nueva ventana)
+
+            var xhrUpdateMonto = new XMLHttpRequest();
+            xhrUpdateMonto.open('POST', '../Model/setMontoVoucher.php', true);
+            xhrUpdateMonto.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            xhrUpdateMonto.onload = function() {
+                if (xhrUpdateMonto.status === 200 && xhrUpdateMonto.responseText.trim() === 'OK') {
                     var form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '../Controller/generarPdf.php';
@@ -171,15 +199,16 @@ if (!$empresa) {
                     input.value = id_remito;
                     form.appendChild(input);
                     document.body.appendChild(form);
-                    form.submit();
-                    document.body.removeChild(form);
+                    form.submit(); 
+                    document.body.removeChild(form); 
+
                     cerrarModalMonto();
-                    loadVouchers();
+                    loadVouchers(); 
                 } else {
-                    alert('Error al guardar el monto');
+                    alert('Error al guardar el monto: ' + xhrUpdateMonto.responseText);
                 }
             };
-            xhr.send('id_remito_v=' + encodeURIComponent(id_remito) + '&monto=' + encodeURIComponent(monto));
+            xhrUpdateMonto.send('id_remito_v=' + encodeURIComponent(id_remito) + '&monto=' + encodeURIComponent(monto));
         };
     });
     </script>

@@ -5,7 +5,7 @@ header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 include '../Model/conexion.php';
-
+include_once 'cors.php';
 function obtenerUltimoRemitoPorChofer($letra_chofer, $conn) {
     $query = "SELECT id_remito_v FROM voucher WHERE id_remito_v LIKE '$letra_chofer%' ORDER BY id_remito_v DESC LIMIT 1";
     $result = mysqli_query($conn, $query);
@@ -28,16 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ultimo_remito = obtenerUltimoRemitoPorChofer($letra_chofer, $conn);
 
     if ($ultimo_remito) {
-        error_log("✅ Último remito encontrado: " . $ultimo_remito);
+        error_log("Último remito encontrado: " . $ultimo_remito);
         echo json_encode(['ultimo_remito' => $ultimo_remito]);
     } else {
-        error_log("⚠️ No se encontró ningún remito para la letra del chofer: " . $letra_chofer);
+        error_log("No se encontró ningún remito para la letra del chofer: " . $letra_chofer);
         echo json_encode(['ultimo_remito' => null]);
     }
 
     $conn->close();
 } else {
-    error_log("⚠️ Método no permitido");
+    error_log("Método no permitido");
     echo json_encode(['status' => 'error', 'message' => 'Método no permitido']);
 }
 ?>

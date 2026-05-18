@@ -20,6 +20,5 @@ if($monto > 0){
 $conn->close();
 } else {
     echo "<script>alert('Error, Número invalido. '); window.location.href='../View/chofer.php';</script>";
-    
 }
 ?>

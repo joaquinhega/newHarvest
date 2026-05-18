@@ -6,7 +6,6 @@ session_start();
 if(!isset($_SESSION['user'])){
     header('Location: ../index.php');
 }
-# Asegura que los valores de los inputs no esten vacios
 $id_remito = isset($_GET['id_remito']) ? $_GET['id_remito'] : '';
 $empresa = isset($_GET['empresa']) ? $_GET['empresa'] : '';
 $origen = isset($_GET['origen']) ? $_GET['origen'] : '';
@@ -17,7 +16,6 @@ $tiempo_espera = isset($_GET['tiempo_espera']) ? $_GET['tiempo_espera'] : '';
 $fecha = isset($_GET['fecha']) ? $_GET['fecha'] : '';
 $observaciones = isset($_GET['observaciones']) ? $_GET['observaciones'] : '';
 $letra_chofer = $_SESSION['letra'];
-# Consulta el ultimo id remito que se cargó 
 $ultimo_remito = obtenerUltimoRemitoPorChofer($letra_chofer, $conn);
 if ($ultimo_remito) {
     $numero = (int)substr($ultimo_remito, 1); 
