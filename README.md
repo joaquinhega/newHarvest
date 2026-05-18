@@ -18,6 +18,7 @@
 10. [Cómo correr el proyecto](#10-cómo-correr-el-proyecto)
 11. [Assets y recursos estáticos](#11-assets-y-recursos-estáticos)
 12. [Observaciones importantes](#12-observaciones-importantes)
+13. [Cambios relevantes de este commit](#13-cambios-relevantes-de-este-commit)
 
 ---
 
@@ -273,6 +274,19 @@ firmas/
 - Se utiliza **borrado lógico** para vouchers, combustibles y empresas.
 - Hay endpoints API consumidos por la app móvil y vistas web para operación interna.
 - FPDF está versionado dentro del repositorio (`fpdf186`).
+
+---
+
+## 13. Cambios relevantes de este commit
+
+El estado actual del proyecto incorpora y deja operativo:
+
+- **Flujo completo de generación de PDF** de vouchers desde `View/empresa.php`:
+  - Modal para asignar/modificar monto.
+  - Persistencia del monto vía `Model/setMontoVoucher.php`.
+  - Generación final en `Controller/generarPdf.php`.
+- **Mejoras de UI/UX en modales y navegación RRHH** (cabecera, tabs y estilos en `Estilo/styles.css`).
+- **Consolidación del circuito web + API** usado por `mobnewharvest`, manteniendo login, altas, consultas, edición y borrado lógico en endpoints `api/`.
 
 ---
 
