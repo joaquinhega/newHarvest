@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#EFEDF1] text-ink-950 font-body antialiased;
+    }
+}
+
+.doc-page {
+    background: #ffffff;
+    border: 1px solid #D2CFD6;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+}
