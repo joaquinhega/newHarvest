@@ -12,7 +12,7 @@ class CompanyResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'path' => $this->path,
+            'logo_path' => $this->logo_path,
             'borrado' => $this->borrado,
             'vouchers_count' => $this->whenCounted('vouchers'),
             'created_at' => $this->created_at?->toIso8601String(),

@@ -15,7 +15,7 @@ class CompanyStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150', 'unique:companies,name'],
-            'path' => ['nullable', 'string', 'max:255'],
+            'logo_path' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -20,9 +20,12 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Procesa el inicio de sesión.
-     * Solo el rol 'rrhh' puede acceder al backoffice web.
-     * A futuro, desde sistema.newharvest.com.ar los choferes
-     * serán redirigidos a la app Flutter según su rol.
+     *
+     * Roles con acceso al backoffice web: 'rrhh' y 'admin'.
+     * Los choferes son bloqueados acá antes de generar sesión.
+     *
+     * A futuro (sistema.newharvest.com.ar), el bloqueo se reemplaza
+     * por una redirección a la app Flutter según el rol detectado.
      */
     public function store(Request $request)
     {
@@ -45,8 +48,7 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
         $roleName = $user->role?->name;
 
-        // Bloquear acceso al backoffice para choferes
-        if ($roleName !== 'rrhh') {
+        if (!in_array($roleName, ['rrhh', 'admin'])) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

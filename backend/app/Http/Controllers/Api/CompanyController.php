@@ -57,7 +57,7 @@ class CompanyController extends Controller
 
         $company = Company::create([
             'name' => $request->validated('name'),
-            'path' => $request->validated('path'),
+            'logo_path' => $request->validated('logo_path'),
             'borrado' => false,
         ]);
 

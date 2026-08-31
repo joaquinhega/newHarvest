@@ -24,7 +24,7 @@ class CompanyUpdateRequest extends FormRequest
                 'max:150',
                 Rule::unique('companies', 'name')->ignore($companyId),
             ],
-            'path' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'logo_path' => ['sometimes', 'nullable', 'string', 'max:255'],
             'borrado' => ['sometimes', 'boolean'],
         ];
     }

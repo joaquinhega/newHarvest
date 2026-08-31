@@ -26,7 +26,7 @@ class CompanyController extends Controller
                     'nombre' => $company->name ?? $company->nombre,
                     'vouchers_count' => $company->vouchers_count ?? 0,
                     'estado' => 'Activa',
-                    'path' => $company->path,
+                    'logo_path' => $company->logo_path,
                 ];
             });
 
