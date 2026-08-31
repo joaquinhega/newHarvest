@@ -9,24 +9,16 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
+        // Solo dos roles: rrhh (backoffice web, incluye operaciones y admin)
+        // y chofer (solo app mobile).
         Role::updateOrCreate(
             ['id' => 1],
-            ['name' => 'admin', 'description' => 'Administrador General']
+            ['name' => 'rrhh', 'description' => 'RRHH / Administración']
         );
 
         Role::updateOrCreate(
             ['id' => 2],
-            ['name' => 'rrhh', 'description' => 'Recursos Humanos']
-        );
-
-        Role::updateOrCreate(
-            ['id' => 3],
             ['name' => 'chofer', 'description' => 'Chofer Operativo']
-        );
-
-        Role::updateOrCreate(
-            ['id' => 4],
-            ['name' => 'empresa', 'description' => 'Empresa Cliente']
         );
     }
 }
