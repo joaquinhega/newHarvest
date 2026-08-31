@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Head } from '@inertiajs/react';
-import { Lock, User, AlertCircle } from 'lucide-react';
+import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({
@@ -8,6 +8,8 @@ export default function Login() {
         password: '',
         remember: false,
     });
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -19,15 +21,14 @@ export default function Login() {
             <Head title="Iniciar Sesión" />
 
             <div className="w-full max-w-[400px] bg-white rounded-3xl border border-ink-100 shadow-xl p-8">
-                {/* Isotipo & Marca */}
+                {/* Logo & Marca */}
                 <div className="flex flex-col items-center text-center mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white font-display font-extrabold text-base shadow-lg shadow-brand-600/25 mb-3">
-                        NH
-                    </div>
-                    <h1 className="font-display text-2xl font-bold text-ink-950 tracking-tight">
-                        New Harvest
-                    </h1>
-                    <p className="text-xs font-semibold text-ink-500 mt-1 uppercase tracking-wider">
+                    <img
+                        src="/logo-newHarvest.png"
+                        alt="New Harvest"
+                        className="h-14 w-auto object-contain mb-3"
+                    />
+                    <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider">
                         Panel de Gestión Operativa & RRHH
                     </p>
                 </div>
@@ -36,7 +37,7 @@ export default function Login() {
                     {/* Campo Usuario */}
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
-                            Usuario o Correo
+                            Usuario
                         </label>
                         <div className="relative">
                             <User className="w-4 h-4 text-ink-500 absolute left-3.5 top-3" />
@@ -65,13 +66,25 @@ export default function Login() {
                         <div className="relative">
                             <Lock className="w-4 h-4 text-ink-500 absolute left-3.5 top-3" />
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full text-sm pl-10 pr-4 py-2.5 rounded-xl border border-ink-300 focus:outline-none focus:border-brand-600 transition-colors bg-[#FAF9FB]"
+                                className="w-full text-sm pl-10 pr-10 py-2.5 rounded-xl border border-ink-300 focus:outline-none focus:border-brand-600 transition-colors bg-[#FAF9FB]"
                                 required
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3.5 top-2.5 text-ink-400 hover:text-ink-700 transition-colors"
+                                tabIndex={-1}
+                                aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                            >
+                                {showPassword
+                                    ? <EyeOff className="w-4 h-4" />
+                                    : <Eye className="w-4 h-4" />
+                                }
+                            </button>
                         </div>
                         {errors.password && (
                             <div className="flex items-center gap-1.5 text-danger-700 text-xs mt-1.5 font-medium">
@@ -105,9 +118,7 @@ export default function Login() {
                 </form>
             </div>
 
-            <p className="text-xs text-ink-500 mt-6 text-center">
-                New Harvest S.A. — Sistema Integral[cite: 2]
-            </p>
+
         </div>
     );
 }
