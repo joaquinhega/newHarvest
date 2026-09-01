@@ -18,11 +18,13 @@ export default function Empresas({ empresas = [] }) {
     // Formulario de Alta
     const createForm = useForm({
         name: '',
+        logo: null,
     });
 
     // Formulario de Modificación
     const editForm = useForm({
         name: '',
+        logo: null,
     });
 
     // Filtro reactivo en el cliente
@@ -56,7 +58,7 @@ export default function Empresas({ empresas = [] }) {
     // Abrir modal de edición
     const handleOpenEdit = (company) => {
         setSelectedCompany(company);
-        editForm.setData('name', company.nombre);
+        editForm.setData({ name: company.nombre, logo: null });
         setIsEditOpen(true);
     };
 
@@ -124,9 +126,17 @@ export default function Empresas({ empresas = [] }) {
                             {/* Avatar y Razón Social */}
                             <td className="px-5 py-3.5">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
-                                        {getInitials(item.nombre)}
-                                    </div>
+                                    {item.logo_base64 ? (
+                                        <img
+                                            src={item.logo_base64}
+                                            alt={`Logo de ${item.nombre}`}
+                                            className="w-8 h-8 rounded-full object-cover shrink-0 border border-ink-100 shadow-sm"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
+                                            {getInitials(item.nombre)}
+                                        </div>
+                                    )}
                                     <span className="font-semibold text-ink-950 text-sm">
                                         {item.nombre}
                                     </span>
@@ -216,6 +226,22 @@ export default function Empresas({ empresas = [] }) {
                         required
                         autoFocus
                     />
+
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                            Logo (opcional)
+                        </label>
+                        <input
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.webp"
+                            onChange={(e) => createForm.setData('logo', e.target.files[0])}
+                            className="w-full text-xs text-ink-700 border border-ink-300 bg-[#FAF9FB] rounded-xl p-2.5 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                        />
+                        <p className="text-[11px] text-ink-500 mt-1">PNG, JPG o WEBP. Máximo 2 MB.</p>
+                        {createForm.errors.logo && (
+                            <p className="text-xs text-danger-700 mt-1">{createForm.errors.logo}</p>
+                        )}
+                    </div>
                 </form>
             </Modal>
 
@@ -257,6 +283,38 @@ export default function Empresas({ empresas = [] }) {
                         error={editForm.errors.name}
                         required
                     />
+
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                            Logo
+                        </label>
+                        <div className="flex items-center gap-3 mb-2">
+                            {selectedCompany?.logo_base64 ? (
+                                <img
+                                    src={selectedCompany.logo_base64}
+                                    alt="Logo actual"
+                                    className="w-10 h-10 rounded-full object-cover border border-ink-100 shadow-sm"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                                    {getInitials(selectedCompany?.nombre)}
+                                </div>
+                            )}
+                            <span className="text-xs text-ink-500">
+                                {selectedCompany?.logo_base64 ? 'Logo actual' : 'Sin logo cargado — usando iniciales'}
+                            </span>
+                        </div>
+                        <input
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.webp"
+                            onChange={(e) => editForm.setData('logo', e.target.files[0])}
+                            className="w-full text-xs text-ink-700 border border-ink-300 bg-[#FAF9FB] rounded-xl p-2.5 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                        />
+                        <p className="text-[11px] text-ink-500 mt-1">Subí una imagen para reemplazar el logo actual. Máximo 2 MB.</p>
+                        {editForm.errors.logo && (
+                            <p className="text-xs text-danger-700 mt-1">{editForm.errors.logo}</p>
+                        )}
+                    </div>
                 </form>
             </Modal>
 
@@ -284,9 +342,17 @@ export default function Empresas({ empresas = [] }) {
                 {selectedCompany && (
                     <div className="space-y-3.5 text-sm">
                         <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-xl border border-brand-100">
-                            <div className="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                                {getInitials(selectedCompany.nombre)}
-                            </div>
+                            {selectedCompany.logo_base64 ? (
+                                <img
+                                    src={selectedCompany.logo_base64}
+                                    alt={`Logo de ${selectedCompany.nombre}`}
+                                    className="w-10 h-10 rounded-full object-cover shadow-sm border border-white"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                    {getInitials(selectedCompany.nombre)}
+                                </div>
+                            )}
                             <div>
                                 <p className="font-bold text-ink-950">{selectedCompany.nombre}</p>
                                 <p className="text-xs text-ink-500 font-mono">ID #{selectedCompany.id}</p>

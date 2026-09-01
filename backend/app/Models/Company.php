@@ -15,6 +15,8 @@ class Company extends Model
     protected $fillable = [
         'name',
         'logo_path',
+        'logo_blob',
+        'logo_mime',
         'borrado',
     ];
 

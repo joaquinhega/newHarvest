@@ -27,6 +27,9 @@ class CompanyController extends Controller
                     'vouchers_count' => $company->vouchers_count ?? 0,
                     'estado' => 'Activa',
                     'logo_path' => $company->logo_path,
+                    'logo_base64' => $company->logo_blob
+                        ? 'data:' . ($company->logo_mime ?: 'image/png') . ';base64,' . base64_encode($company->logo_blob)
+                        : null,
                 ];
             });
 
@@ -42,14 +45,24 @@ class CompanyController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'logo' => 'nullable|image|max:2048',
         ], [
             'name.required' => 'El nombre de la empresa es obligatorio.',
+            'logo.image' => 'El logo debe ser una imagen (JPG, PNG, etc.).',
+            'logo.max' => 'El logo no puede pesar más de 2 MB.',
         ]);
 
-        Company::create([
+        $company = Company::create([
             'name' => $validated['name'],
             'borrado' => false,
         ]);
+
+        if ($request->hasFile('logo')) {
+            $company->update([
+                'logo_blob' => file_get_contents($request->file('logo')->getRealPath()),
+                'logo_mime' => $request->file('logo')->getMimeType(),
+            ]);
+        }
 
         return redirect()->route('empresas.index')->with('message', 'Empresa creada exitosamente.');
     }
@@ -61,14 +74,22 @@ class CompanyController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'logo' => 'nullable|image|max:2048',
         ], [
             'name.required' => 'El nombre de la empresa es obligatorio.',
+            'logo.image' => 'El logo debe ser una imagen (JPG, PNG, etc.).',
+            'logo.max' => 'El logo no puede pesar más de 2 MB.',
         ]);
 
         $company = Company::findOrFail($id);
-        $company->update([
-            'name' => $validated['name'],
-        ]);
+        $company->name = $validated['name'];
+
+        if ($request->hasFile('logo')) {
+            $company->logo_blob = file_get_contents($request->file('logo')->getRealPath());
+            $company->logo_mime = $request->file('logo')->getMimeType();
+        }
+
+        $company->save();
 
         return redirect()->route('empresas.index')->with('message', 'Empresa actualizada correctamente.');
     }
