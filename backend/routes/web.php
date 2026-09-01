@@ -29,6 +29,7 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
     Route::get('/vouchers/export/excel', [VoucherController::class, 'exportExcel'])->name('vouchers.export.excel');
     Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
     Route::patch('/vouchers/{id}/aprobar', [VoucherController::class, 'approve'])->name('vouchers.approve');
+    Route::patch('/vouchers/{id}/desaprobar', [VoucherController::class, 'disapprove'])->name('vouchers.disapprove');
     Route::put('/vouchers/{id}', [VoucherController::class, 'update'])->name('vouchers.update');
 
     // Operaciones: Combustible

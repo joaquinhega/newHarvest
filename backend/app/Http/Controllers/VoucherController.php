@@ -174,6 +174,15 @@ class VoucherController extends Controller
         return redirect()->back()->with('message', "Voucher #{$voucher->remito_code} aprobado.");
     }
 
+    public function disapprove(Request $request, $id)
+    {
+        $voucher = Voucher::where('borrado', false)->findOrFail($id);
+        $voucher->status = 'pendiente';
+        $voucher->save();
+
+        return redirect()->back()->with('message', "Voucher #{$voucher->remito_code} vuelto a estado pendiente.");
+    }
+
     public function update(Request $request, $id)
     {
         $voucher = Voucher::where('borrado', false)->findOrFail($id);

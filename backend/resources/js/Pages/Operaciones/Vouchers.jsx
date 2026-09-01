@@ -16,7 +16,8 @@ import {
     Clock, 
     User, 
     Building2, 
-    PenTool
+    PenTool,
+    RotateCcw
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -86,6 +87,17 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
     const handleApprove = (voucher) => {
         if (confirm(`¿Aprobar el voucher #${voucher.remito_code} de ${voucher.pasajero}?`)) {
             router.patch(`/vouchers/${voucher.id}/aprobar`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (isDetailOpen) setIsDetailOpen(false);
+                }
+            });
+        }
+    };
+
+    const handleDisapprove = (voucher) => {
+        if (confirm(`¿Desaprobar el voucher #${voucher.remito_code} de ${voucher.pasajero}? Volverá a estado pendiente.`)) {
+            router.patch(`/vouchers/${voucher.id}/desaprobar`, {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     if (isDetailOpen) setIsDetailOpen(false);
@@ -289,16 +301,38 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                         >
                             Cerrar
                         </Button>
-                        {selectedVoucher?.status === 'pendiente' && (
+                        <div className="flex items-center gap-2">
                             <Button
-                                variant="verify"
-                                onClick={() => handleApprove(selectedVoucher)}
+                                variant="outline"
+                                onClick={() => {
+                                    setIsDetailOpen(false);
+                                    handleOpenEdit(selectedVoucher);
+                                }}
                                 className="gap-1.5"
                             >
-                                <Check className="w-4 h-4" />
-                                Aprobar voucher
+                                <Pencil className="w-4 h-4" />
+                                Editar
                             </Button>
-                        )}
+                            {selectedVoucher?.status === 'pendiente' ? (
+                                <Button
+                                    variant="verify"
+                                    onClick={() => handleApprove(selectedVoucher)}
+                                    className="gap-1.5"
+                                >
+                                    <Check className="w-4 h-4" />
+                                    Aprobar voucher
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="danger"
+                                    onClick={() => handleDisapprove(selectedVoucher)}
+                                    className="gap-1.5"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Desaprobar
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 }
             >
@@ -309,9 +343,20 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                                 <p className="text-[10px] uppercase font-bold text-ink-500">Pasajero</p>
                                 <p className="text-sm font-bold text-ink-950">{selectedVoucher.pasajero}</p>
                             </div>
-                            <Badge variant={selectedVoucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
-                                {selectedVoucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente de aprobación'}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-1">
+                                <Badge variant={selectedVoucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
+                                    {selectedVoucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente de aprobación'}
+                                </Badge>
+                                {selectedVoucher.firma ? (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-verify-700">
+                                        <PenTool className="w-3 h-3" /> Firmado ✓
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-ink-400">
+                                        <PenTool className="w-3 h-3" /> Sin firma
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -348,7 +393,7 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                             {selectedVoucher.tiempo_espera > 0 && (
                                 <div className="pt-1.5 flex items-center gap-1.5 text-pending-700 font-medium border-t border-ink-200/50">
                                     <Clock className="w-3.5 h-3.5" />
-                                    <span>Tiempo de espera facturable: {selectedVoucher.tiempo_espera} min.</span>
+                                    <span>Tiempo de espera: {selectedVoucher.tiempo_espera} min.</span>
                                 </div>
                             )}
                         </div>
@@ -366,24 +411,6 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                             </div>
                         </div>
 
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1.5 flex items-center gap-1">
-                                <PenTool className="w-3 h-3 text-brand-600" /> Firma Electrónica del Pasajero
-                            </p>
-                            <div className="border border-dashed border-ink-300 rounded-xl p-3 bg-white flex items-center justify-center min-h-[90px]">
-                                {selectedVoucher.firma ? (
-                                    <img 
-                                        src={selectedVoucher.firma.startsWith('http') || selectedVoucher.firma.startsWith('/') 
-                                            ? selectedVoucher.firma 
-                                            : `/${selectedVoucher.firma}`} 
-                                        alt="Firma del pasajero" 
-                                        className="max-h-20 object-contain"
-                                    />
-                                ) : (
-                                    <span className="text-ink-400 italic text-[11px]">Voucher firmado sin soporte gráfico previo</span>
-                                )}
-                            </div>
-                        </div>
                     </div>
                 )}
             </Modal>
