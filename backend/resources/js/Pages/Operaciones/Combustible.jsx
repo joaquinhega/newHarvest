@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Button from '@/Components/UI/Button';
@@ -13,17 +13,40 @@ export default function Combustible({ remitos = [], filters = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedRemito, setSelectedRemito] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [dateFrom, setDateFrom] = useState(filters.date_from || '');
+    const [dateTo, setDateTo] = useState(filters.date_to || '');
 
     const handleTabChange = (status) => {
-        router.get('/combustible', { ...filters, status }, { preserveState: true, replace: true });
+        router.get('/combustible', { ...filters, status, date_from: dateFrom, date_to: dateTo }, { preserveState: true, replace: true });
+    };
+
+    // Aplica el filtro de fecha contra el backend con un pequeño debounce,
+    // evitando disparar una request en cada tecleo o al montar el componente.
+    useEffect(() => {
+        if (dateFrom === (filters.date_from || '') && dateTo === (filters.date_to || '')) {
+            return;
+        }
+        const timeout = setTimeout(() => {
+            router.get('/combustible', { ...filters, status: currentStatus, date_from: dateFrom, date_to: dateTo }, {
+                preserveState: true,
+                replace: true,
+            });
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    }, [dateFrom, dateTo]);
+
+    const handleClearDates = () => {
+        setDateFrom('');
+        setDateTo('');
     };
 
     const handleExportExcel = () => {
         const params = new URLSearchParams({
             status: currentStatus,
             search: searchTerm,
-            ...(filters.date_from ? { date_from: filters.date_from } : {}),
-            ...(filters.date_to ? { date_to: filters.date_to } : {}),
+            ...(dateFrom ? { date_from: dateFrom } : {}),
+            ...(dateTo ? { date_to: dateTo } : {}),
         });
         window.location.href = `/combustible/export/excel?${params.toString()}`;
     };
@@ -98,15 +121,45 @@ export default function Combustible({ remitos = [], filters = {} }) {
             </div>
 
             <div className="space-y-4">
-                <div className="bg-white rounded-2xl border border-ink-100 p-3 flex items-center gap-3 shadow-sm">
-                    <Search className="w-4 h-4 text-ink-500 ml-1 shrink-0" />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por patente, chofer o N° de remito..."
-                        className="w-full text-sm text-ink-950 placeholder:text-ink-500 focus:outline-none bg-transparent"
-                    />
+                <div className="bg-white rounded-2xl border border-ink-100 p-3 flex flex-col lg:flex-row lg:items-center gap-3 shadow-sm">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Search className="w-4 h-4 text-ink-500 ml-1 shrink-0" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar por patente, chofer o N° de remito..."
+                            className="w-full text-sm text-ink-950 placeholder:text-ink-500 focus:outline-none bg-transparent"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 lg:pl-3 lg:border-l lg:border-ink-100">
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            max={dateTo || undefined}
+                            aria-label="Desde"
+                            className="text-xs text-ink-950 rounded-lg border border-ink-200 px-2.5 py-1.5 focus:outline-none focus:border-brand-600 bg-[#FAF9FB]"
+                        />
+                        <span className="text-ink-400 text-xs">–</span>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            min={dateFrom || undefined}
+                            aria-label="Hasta"
+                            className="text-xs text-ink-950 rounded-lg border border-ink-200 px-2.5 py-1.5 focus:outline-none focus:border-brand-600 bg-[#FAF9FB]"
+                        />
+                        {(dateFrom || dateTo) && (
+                            <button
+                                type="button"
+                                onClick={handleClearDates}
+                                className="text-[11px] font-semibold text-ink-500 hover:text-brand-700 whitespace-nowrap"
+                            >
+                                Limpiar
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <Table
