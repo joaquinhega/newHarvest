@@ -5,7 +5,9 @@ use Inertia\Inertia;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\VoucherPdfController;
 use App\Http\Controllers\CombustibleController;
+use App\Http\Controllers\CombustiblePdfController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\SanctionController;
@@ -31,11 +33,13 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
     Route::patch('/vouchers/{id}/aprobar', [VoucherController::class, 'approve'])->name('vouchers.approve');
     Route::patch('/vouchers/{id}/desaprobar', [VoucherController::class, 'disapprove'])->name('vouchers.disapprove');
     Route::put('/vouchers/{id}', [VoucherController::class, 'update'])->name('vouchers.update');
+    Route::get('/vouchers/{id}/pdf', [VoucherPdfController::class, 'generate'])->name('vouchers.pdf');
 
     // Operaciones: Combustible
     Route::get('/combustible/export/excel', [CombustibleController::class, 'exportExcel'])->name('combustible.export.excel');
     Route::get('/combustible', [CombustibleController::class, 'index'])->name('combustible.index');
     Route::patch('/combustible/{id}/aprobar', [CombustibleController::class, 'approve'])->name('combustible.approve');
+    Route::get('/combustible/{id}/pdf', [CombustiblePdfController::class, 'generate'])->name('combustible.pdf');
 
     // Empresas
     Route::get('/empresas', [CompanyController::class, 'index'])->name('empresas.index');

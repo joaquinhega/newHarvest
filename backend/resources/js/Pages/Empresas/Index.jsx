@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Button from '@/Components/UI/Button';
@@ -6,7 +6,7 @@ import Input from '@/Components/UI/Input';
 import Badge from '@/Components/UI/Badge';
 import Modal from '@/Components/UI/Modal';
 import Table from '@/Components/UI/Table';
-import { Plus, Eye, Pencil, Trash2, Search, Building2 } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Search, Building2, ArrowRight } from 'lucide-react';
 
 export default function Empresas({ empresas = [] }) {
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,7 +21,7 @@ export default function Empresas({ empresas = [] }) {
         logo: null,
     });
 
-    // Formulario de Modificación
+    // Formulario de ModificaciÃ³n
     const editForm = useForm({
         name: '',
         logo: null,
@@ -44,7 +44,7 @@ export default function Empresas({ empresas = [] }) {
         return name.substring(0, 2).toUpperCase();
     };
 
-    // Procesar creación
+    // Procesar creaciÃ³n
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         createForm.post('/empresas', {
@@ -55,14 +55,14 @@ export default function Empresas({ empresas = [] }) {
         });
     };
 
-    // Abrir modal de edición
+    // Abrir modal de ediciÃ³n
     const handleOpenEdit = (company) => {
         setSelectedCompany(company);
         editForm.setData({ name: company.nombre, logo: null });
         setIsEditOpen(true);
     };
 
-    // Procesar edición
+    // Procesar ediciÃ³n
     const handleEditSubmit = (e) => {
         e.preventDefault();
         editForm.put(`/empresas/${selectedCompany.id}`, {
@@ -73,9 +73,9 @@ export default function Empresas({ empresas = [] }) {
         });
     };
 
-    // Procesar baja lógica
+    // Procesar baja lÃ³gica
     const handleDelete = (company) => {
-        if (confirm(`¿Estás seguro de desactivar la empresa "${company.nombre}"?`)) {
+        if (confirm(`Â¿EstÃ¡s seguro de desactivar la empresa "${company.nombre}"?`)) {
             router.delete(`/empresas/${company.id}`);
         }
     };
@@ -91,7 +91,7 @@ export default function Empresas({ empresas = [] }) {
     return (
         <AuthenticatedLayout
             title="Empresas"
-            subtitle="Gestioná las empresas asociadas a los viajes y centros de costos"
+            subtitle="GestionÃ¡ las empresas asociadas a los viajes y centros de costos"
             actions={
                 <Button
                     onClick={() => setIsCreateOpen(true)}
@@ -119,11 +119,11 @@ export default function Empresas({ empresas = [] }) {
                 <Table
                     headers={tableHeaders}
                     isEmpty={filteredEmpresas.length === 0}
-                    emptyMessage="No se encontraron empresas activas con ese criterio de búsqueda."
+                    emptyMessage="No se encontraron empresas activas con ese criterio de bÃºsqueda."
                 >
                     {filteredEmpresas.map((item) => (
                         <tr key={item.id} className="hover:bg-[#FAF9FB] transition-colors">
-                            {/* Avatar y Razón Social */}
+                            {/* Avatar y RazÃ³n Social */}
                             <td className="px-5 py-3.5">
                                 <div className="flex items-center gap-3">
                                     {item.logo_base64 ? (
@@ -197,7 +197,7 @@ export default function Empresas({ empresas = [] }) {
                 isOpen={isCreateOpen}
                 onClose={() => setIsCreateOpen(false)}
                 title="Nueva Empresa"
-                subtitle="Ingresá la razón social del cliente corporativo"
+                subtitle="IngresÃ¡ la razÃ³n social del cliente corporativo"
                 footer={
                     <>
                         <Button
@@ -217,7 +217,7 @@ export default function Empresas({ empresas = [] }) {
             >
                 <form onSubmit={handleCreateSubmit} className="space-y-4">
                     <Input
-                        label="Nombre / Razón Social"
+                        label="Nombre / RazÃ³n Social"
                         value={createForm.data.name}
                         onChange={(e) => createForm.setData('name', e.target.value)}
                         placeholder="Ej. Chandon, Simplot, Rayen Cura"
@@ -237,7 +237,7 @@ export default function Empresas({ empresas = [] }) {
                             onChange={(e) => createForm.setData('logo', e.target.files[0])}
                             className="w-full text-xs text-ink-700 border border-ink-300 bg-[#FAF9FB] rounded-xl p-2.5 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                         />
-                        <p className="text-[11px] text-ink-500 mt-1">PNG, JPG o WEBP. Máximo 2 MB.</p>
+                        <p className="text-[11px] text-ink-500 mt-1">PNG, JPG o WEBP. MÃ¡ximo 2 MB.</p>
                         {createForm.errors.logo && (
                             <p className="text-xs text-danger-700 mt-1">{createForm.errors.logo}</p>
                         )}
@@ -276,7 +276,7 @@ export default function Empresas({ empresas = [] }) {
             >
                 <form onSubmit={handleEditSubmit} className="space-y-4">
                     <Input
-                        label="Nombre / Razón Social"
+                        label="Nombre / RazÃ³n Social"
                         value={editForm.data.name}
                         onChange={(e) => editForm.setData('name', e.target.value)}
                         icon={Building2}
@@ -301,7 +301,7 @@ export default function Empresas({ empresas = [] }) {
                                 </div>
                             )}
                             <span className="text-xs text-ink-500">
-                                {selectedCompany?.logo_base64 ? 'Logo actual' : 'Sin logo cargado — usando iniciales'}
+                                {selectedCompany?.logo_base64 ? 'Logo actual' : 'Sin logo cargado â€” usando iniciales'}
                             </span>
                         </div>
                         <input
@@ -310,7 +310,7 @@ export default function Empresas({ empresas = [] }) {
                             onChange={(e) => editForm.setData('logo', e.target.files[0])}
                             className="w-full text-xs text-ink-700 border border-ink-300 bg-[#FAF9FB] rounded-xl p-2.5 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                         />
-                        <p className="text-[11px] text-ink-500 mt-1">Subí una imagen para reemplazar el logo actual. Máximo 2 MB.</p>
+                        <p className="text-[11px] text-ink-500 mt-1">SubÃ­ una imagen para reemplazar el logo actual. MÃ¡ximo 2 MB.</p>
                         {editForm.errors.logo && (
                             <p className="text-xs text-danger-700 mt-1">{editForm.errors.logo}</p>
                         )}
@@ -328,15 +328,31 @@ export default function Empresas({ empresas = [] }) {
                 title={selectedCompany?.nombre}
                 subtitle="Ficha de cliente corporativo"
                 footer={
-                    <Button
-                        variant="ghost"
-                        onClick={() => {
-                            setIsDetailOpen(false);
-                            setSelectedCompany(null);
-                        }}
-                    >
-                        Cerrar
-                    </Button>
+                    <div className="w-full flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setIsDetailOpen(false);
+                                setSelectedCompany(null);
+                            }}
+                        >
+                            Cerrar
+                        </Button>
+                        {selectedCompany?.vouchers_count > 0 && (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    router.get('/vouchers');
+                                    setIsDetailOpen(false);
+                                    setSelectedCompany(null);
+                                }}
+                                className="gap-1.5 ml-auto"
+                            >
+                                <ArrowRight className="w-4 h-4" />
+                                Ver {selectedCompany?.vouchers_count} vouchers
+                            </Button>
+                        )}
+                    </div>
                 }
             >
                 {selectedCompany && (
@@ -365,13 +381,48 @@ export default function Empresas({ empresas = [] }) {
                                 <Badge variant="Activa">{selectedCompany.estado}</Badge>
                             </div>
                             <div className="flex justify-between items-center text-xs">
-                                <span className="text-ink-500 font-medium">Volumen Histórico de Viajes:</span>
+                                <span className="text-ink-500 font-medium">Volumen HistÃ³rico de Viajes:</span>
                                 <span className="font-mono font-bold text-brand-700 text-sm">
                                     {selectedCompany.vouchers_count} vouchers
                                 </span>
                             </div>
                         </div>
-                    </div>
+                        {selectedCompany.vouchers && selectedCompany.vouchers.length > 0 && (
+                            <div className="border-t border-ink-200 pt-4">
+                                <h4 className="text-xs font-bold uppercase text-ink-700 mb-2.5 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-brand-600 rounded-full"></span>
+                                    Últimos Viajes
+                                </h4>
+                                <div className="space-y-2">
+                                    {selectedCompany.vouchers.slice(0, 5).map((voucher) => (
+                                        <div
+                                            key={voucher.id}
+                                            className="p-2 bg-[#FAF9FB] rounded-lg border border-ink-100 flex items-center justify-between text-[11px]"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
+                                                    {voucher.remito_code}
+                                                </span>
+                                                <span className="text-ink-600">
+                                                    {voucher.passenger_name}
+                                                </span>
+                                                <span className="text-ink-400">
+                                                    {voucher.date}
+                                                </span>
+                                            </div>
+                                            <Badge variant={voucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
+                                                {voucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente'}
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                                {selectedCompany.vouchers.length > 5 && (
+                                    <p className="text-[10px] text-ink-400 mt-2 italic">
+                                        ...y {selectedCompany.vouchers.length - 5} viajes más
+                                    </p>
+                                )}
+                            </div>
+                        )}                    </div>
                 )}
             </Modal>
         </AuthenticatedLayout>

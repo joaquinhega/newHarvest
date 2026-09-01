@@ -33,6 +33,25 @@ class CompanyController extends Controller
                 ];
             });
 
+        // Cargar vouchers reales para cada empresa
+        $empresas = $empresas->map(function ($company) {
+            $companyModel = Company::with('vouchers')->find($company['id']);
+            $company['vouchers'] = $companyModel && $companyModel->vouchers
+                ? $companyModel->vouchers->where('borrado', false)->map(function ($voucher) {
+                    return [
+                        'id' => $voucher->id,
+                        'remito_code' => $voucher->remito_code,
+                        'passenger_name' => $voucher->passenger_name ?: 'Sin Pasajero',
+                        'origin' => $voucher->origin,
+                        'destination' => $voucher->destination,
+                        'date' => $voucher->date ? $voucher->date->format('d/m/Y') : '',
+                        'amount' => $voucher->amount,
+                        'status' => $voucher->status,
+                    ];
+                })->toArray()
+                : [];
+            return $company;
+        });
         return Inertia::render('Empresas/Index', [
             'empresas' => $empresas,
         ]);

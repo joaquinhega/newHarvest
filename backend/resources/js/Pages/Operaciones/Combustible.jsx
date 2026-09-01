@@ -228,6 +228,14 @@ export default function Combustible({ remitos = [], filters = {} }) {
                             }}
                         >
                             Cerrar
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => window.open(`/combustible/${selectedRemito?.id}/pdf`, '_blank')}
+                                                    className="gap-1.5"
+                                                >
+                                                    <FileDown className="w-4 h-4" />
+                                                    Descargar PDF
+                                                </Button>
                         </Button>
                         {selectedRemito?.status === 'pendiente' && (
                             <Button

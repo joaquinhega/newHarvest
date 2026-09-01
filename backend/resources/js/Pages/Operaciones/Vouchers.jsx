@@ -27,6 +27,8 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+    const [voucherToApprove, setVoucherToApprove] = useState(null);
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
 
@@ -93,14 +95,20 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     }, [vouchers, searchTerm]);
 
     const handleApprove = (voucher) => {
-        if (confirm(`¿Aprobar el voucher #${voucher.remito_code} de ${voucher.pasajero}?`)) {
-            router.patch(`/vouchers/${voucher.id}/aprobar`, {}, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    if (isDetailOpen) setIsDetailOpen(false);
-                }
-            });
-        }
+        setVoucherToApprove(voucher);
+        setIsApproveModalOpen(true);
+    };
+
+    const handleConfirmApprove = () => {
+        if (!voucherToApprove) return;
+        router.patch(`/vouchers/${voucherToApprove.id}/aprobar`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsApproveModalOpen(false);
+                setVoucherToApprove(null);
+                if (isDetailOpen) setIsDetailOpen(false);
+            }
+        });
     };
 
     const handleDisapprove = (voucher) => {
@@ -328,11 +336,21 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                             >
                                 <Pencil className="w-4 h-4" />
                                 Editar
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => window.open(`/vouchers/${selectedVoucher?.id}/pdf`, '_blank')}
+                                                            className="gap-1.5"
+                                                        >
+                                                            <FileDown className="w-4 h-4" />
+                                                            Descargar PDF
+                                                        </Button>
                             </Button>
                             {selectedVoucher?.status === 'pendiente' ? (
                                 <Button
                                     variant="verify"
-                                    onClick={() => handleApprove(selectedVoucher)}
+                                    onClick={() => {
+                                        handleApprove(selectedVoucher);
+                                    }}
                                     className="gap-1.5"
                                 >
                                     <Check className="w-4 h-4" />
@@ -354,42 +372,45 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             >
                 {selectedVoucher && (
                     <div className="space-y-4 text-xs">
-                        <div className="flex justify-between items-center bg-ink-50 p-3 rounded-2xl border border-ink-100">
+                        {/* Header con Estado y Firma */}
+                        <div className="flex justify-between items-start bg-ink-50 p-3 rounded-2xl border border-ink-100">
                             <div>
-                                <p className="text-[10px] uppercase font-bold text-ink-500">Pasajero</p>
-                                <p className="text-sm font-bold text-ink-950">{selectedVoucher.pasajero}</p>
+                                <p className="text-[10px] uppercase font-bold text-ink-500">ID Remito</p>
+                                <p className="text-sm font-mono font-bold text-brand-700">{selectedVoucher.remito_code}</p>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                                 <Badge variant={selectedVoucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
                                     {selectedVoucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente de aprobación'}
                                 </Badge>
-                                {selectedVoucher.firma ? (
+                                {selectedVoucher.firma && (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-verify-700">
                                         <PenTool className="w-3 h-3" /> Firmado ✓
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-ink-400">
-                                        <PenTool className="w-3 h-3" /> Sin firma
                                     </span>
                                 )}
                             </div>
                         </div>
 
+                        {/* Fecha y Pasajero */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
-                                    <Building2 className="w-3 h-3 text-brand-600" /> Empresa
-                                </p>
-                                <p className="font-semibold text-ink-950">{selectedVoucher.empresa}</p>
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Fecha</p>
+                                <p className="font-semibold text-ink-950">{selectedVoucher.fecha_formateada}</p>
                             </div>
                             <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
-                                    <User className="w-3 h-3 text-brand-600" /> Chofer Asignado
-                                </p>
-                                <p className="font-semibold text-ink-950">{selectedVoucher.chofer}</p>
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Pasajero</p>
+                                <p className="font-semibold text-ink-950">{selectedVoucher.pasajero}</p>
                             </div>
                         </div>
 
+                        {/* Empresa */}
+                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
+                            <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
+                                <Building2 className="w-3 h-3 text-brand-600" /> Empresa
+                            </p>
+                            <p className="font-semibold text-ink-950">{selectedVoucher.empresa}</p>
+                        </div>
+
+                        {/* Itinerario */}
                         <div className="p-3.5 rounded-xl border border-ink-100 bg-[#FAF9FB] space-y-2">
                             <p className="text-[10px] uppercase font-bold text-ink-500">Itinerario y Hoja de Ruta</p>
                             <div className="flex items-start gap-2">
@@ -406,25 +427,39 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                                     <p className="text-ink-500 font-mono text-[11px]">Llegada: {selectedVoucher.hora_destino} hs</p>
                                 </div>
                             </div>
-                            {selectedVoucher.tiempo_espera > 0 && (
-                                <div className="pt-1.5 flex items-center gap-1.5 text-pending-700 font-medium border-t border-ink-200/50">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    <span>Tiempo de espera: {selectedVoucher.tiempo_espera} min.</span>
-                                </div>
-                            )}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="col-span-2 p-3 rounded-xl border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Observaciones</p>
-                                <p className="text-ink-700 italic">{selectedVoucher.observaciones || 'Sin observaciones registradas.'}</p>
+                        {/* Importe */}
+                        <div className="p-3 rounded-xl border border-brand-200 bg-brand-50/50">
+                            <p className="text-[10px] uppercase font-bold text-brand-700 mb-1">Importe Total</p>
+                            <p className="font-mono font-bold text-lg text-brand-700">
+                                $ {selectedVoucher.monto.toLocaleString('es-AR')}
+                            </p>
+                        </div>
+
+                        {/* Chofer */}
+                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
+                            <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
+                                <User className="w-3 h-3 text-brand-600" /> Chofer Responsable
+                            </p>
+                            <p className="font-semibold text-ink-950">{selectedVoucher.chofer}</p>
+                        </div>
+
+                        {/* Tiempo Espera */}
+                        {selectedVoucher.tiempo_espera > 0 && (
+                            <div className="p-3 rounded-xl border border-pending-200 bg-pending-50/50 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-pending-700 shrink-0" />
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-pending-700">Tiempo de Espera</p>
+                                    <p className="font-semibold text-ink-950">{selectedVoucher.tiempo_espera} minutos</p>
+                                </div>
                             </div>
-                            <div className="p-3 rounded-xl border border-brand-200 bg-brand-50/50 flex flex-col justify-center">
-                                <p className="text-[10px] uppercase font-bold text-brand-700">Importe</p>
-                                <p className="font-mono font-bold text-sm text-ink-950">
-                                    $ {selectedVoucher.monto.toLocaleString('es-AR')}
-                                </p>
-                            </div>
+                        )}
+
+                        {/* Observaciones */}
+                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
+                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Observaciones</p>
+                            <p className="text-ink-700 italic">{selectedVoucher.observaciones || 'Sin observaciones registradas.'}</p>
                         </div>
 
                     </div>
@@ -584,6 +619,90 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                         />
                     </div>
                 </form>
+            </Modal>
+
+            {/* Modal Confirmación de Aprobación */}
+            <Modal
+                isOpen={isApproveModalOpen}
+                onClose={() => {
+                    setIsApproveModalOpen(false);
+                    setVoucherToApprove(null);
+                }}
+                title="Confirmar Aprobación del Voucher"
+                subtitle="Revisa los datos antes de aprobar"
+                maxWidth="md"
+                footer={
+                    <div className="flex items-center gap-2 justify-end">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setIsApproveModalOpen(false);
+                                setVoucherToApprove(null);
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="verify"
+                            onClick={handleConfirmApprove}
+                            className="gap-1.5"
+                        >
+                            <Check className="w-4 h-4" />
+                            Aprobar Ahora
+                        </Button>
+                    </div>
+                }
+            >
+                {voucherToApprove && (
+                    <div className="space-y-3 text-sm">
+                        <div className="bg-verify-50 border border-verify-200 rounded-xl p-3.5">
+                            <div className="flex items-start gap-3">
+                                <Check className="w-5 h-5 text-verify-700 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-bold text-verify-950">Revisá estos datos antes de confirmar</p>
+                                    <p className="text-xs text-verify-700 mt-0.5">Una vez aprobado, el voucher quedará registrado en el sistema.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Remito</p>
+                                <p className="font-mono font-bold text-brand-600">{voucherToApprove.remito_code}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Fecha</p>
+                                <p className="font-semibold text-ink-950">{voucherToApprove.fecha_formateada}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Pasajero</p>
+                            <p className="font-semibold text-ink-950">{voucherToApprove.pasajero}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Empresa</p>
+                                <p className="font-semibold text-ink-950">{voucherToApprove.empresa}</p>
+                            </div>
+                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Chofer</p>
+                                <p className="font-semibold text-ink-950">{voucherToApprove.chofer}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-lg border border-brand-200 bg-brand-50">
+                            <p className="text-[10px] uppercase font-bold text-brand-700 mb-1">Importe</p>
+                            <p className="font-mono font-bold text-lg text-brand-700">$ {voucherToApprove.monto.toLocaleString('es-AR')}</p>
+                        </div>
+
+                        <div className="p-3 rounded-lg border border-ink-100 bg-white">
+                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Ruta</p>
+                            <p className="font-semibold text-ink-950">{voucherToApprove.origen} <span className="text-brand-600">→</span> {voucherToApprove.destino}</p>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </AuthenticatedLayout>
     );
