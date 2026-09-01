@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
-export default function Vouchers({ vouchers = [], companies = [], filters = {} }) {
+export default function Vouchers({ vouchers = [], companies = [], choferes = [], filters = {} }) {
     const currentStatus = filters.status || 'pendiente';
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedVoucher, setSelectedVoucher] = useState(null);
@@ -32,6 +32,14 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
 
     const editForm = useForm({
         company_id: '',
+        user_id: '',
+        passenger_name: '',
+        origin: '',
+        destination: '',
+        pickup_time: '',
+        dropoff_time: '',
+        wait_time: '',
+        date: '',
         amount: '',
         observation: '',
     });
@@ -110,6 +118,14 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
         setSelectedVoucher(voucher);
         editForm.setData({
             company_id: voucher.company_id || '',
+            user_id: voucher.chofer_user_id || '',
+            passenger_name: voucher.pasajero === 'Sin Pasajero' ? '' : (voucher.pasajero || ''),
+            origin: voucher.origen || '',
+            destination: voucher.destino || '',
+            pickup_time: voucher.hora_origen === '--:--' ? '' : (voucher.hora_origen || ''),
+            dropoff_time: voucher.hora_destino === '--:--' ? '' : (voucher.hora_destino || ''),
+            wait_time: voucher.tiempo_espera || '',
+            date: voucher.fecha || '',
             amount: voucher.monto || '',
             observation: voucher.observaciones || '',
         });
@@ -423,7 +439,8 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                     setSelectedVoucher(null);
                 }}
                 title={`Editar Voucher #${selectedVoucher?.remito_code}`}
-                subtitle="Modificá la empresa asignada, monto u observaciones"
+                subtitle="Modificá los datos del viaje, la empresa u observaciones"
+                maxWidth="lg"
                 footer={
                     <>
                         <Button
@@ -442,30 +459,117 @@ export default function Vouchers({ vouchers = [], companies = [], filters = {} }
                 }
             >
                 <form onSubmit={handleEditSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
-                            Empresa Asociada
-                        </label>
-                        <select
-                            value={editForm.data.company_id}
-                            onChange={(e) => editForm.setData('company_id', e.target.value)}
-                            className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
-                        >
-                            <option value="">Seleccionar empresa...</option>
-                            {companies.map((c) => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                    <Input
+                        label="Pasajero"
+                        value={editForm.data.passenger_name}
+                        onChange={(e) => editForm.setData('passenger_name', e.target.value)}
+                        placeholder="Nombre del pasajero"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                                Empresa Asociada
+                            </label>
+                            <select
+                                value={editForm.data.company_id}
+                                onChange={(e) => editForm.setData('company_id', e.target.value)}
+                                className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
+                            >
+                                <option value="">Seleccionar empresa...</option>
+                                {companies.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                                Chofer Asignado
+                            </label>
+                            <select
+                                value={editForm.data.user_id}
+                                onChange={(e) => editForm.setData('user_id', e.target.value)}
+                                className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
+                            >
+                                <option value="">Sin asignar</option>
+                                {choferes.map((c) => (
+                                    <option key={c.id_usuario} value={c.id_usuario}>
+                                        {c.first_name} {c.last_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <Input
-                        label="Monto del Viaje ($)"
-                        type="number"
-                        step="0.01"
-                        value={editForm.data.amount}
-                        onChange={(e) => editForm.setData('amount', e.target.value)}
-                        placeholder="Ej. 35000"
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input
+                            label="Origen"
+                            value={editForm.data.origin}
+                            onChange={(e) => editForm.setData('origin', e.target.value)}
+                            placeholder="Punto de partida"
+                        />
+                        <Input
+                            label="Destino"
+                            value={editForm.data.destination}
+                            onChange={(e) => editForm.setData('destination', e.target.value)}
+                            placeholder="Punto de llegada"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                                Hora Salida
+                            </label>
+                            <input
+                                type="time"
+                                value={editForm.data.pickup_time}
+                                onChange={(e) => editForm.setData('pickup_time', e.target.value)}
+                                className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                                Hora Llegada
+                            </label>
+                            <input
+                                type="time"
+                                value={editForm.data.dropoff_time}
+                                onChange={(e) => editForm.setData('dropoff_time', e.target.value)}
+                                className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
+                            />
+                        </div>
+                        <Input
+                            label="Espera (min)"
+                            type="number"
+                            min="0"
+                            value={editForm.data.wait_time}
+                            onChange={(e) => editForm.setData('wait_time', e.target.value)}
+                            placeholder="0"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                                Fecha del Viaje
+                            </label>
+                            <input
+                                type="date"
+                                value={editForm.data.date}
+                                onChange={(e) => editForm.setData('date', e.target.value)}
+                                className="w-full text-sm rounded-xl border border-ink-300 bg-[#FAF9FB] px-3.5 py-2.5 text-ink-950 focus:outline-none focus:border-brand-600"
+                            />
+                        </div>
+                        <Input
+                            label="Monto del Viaje ($)"
+                            type="number"
+                            step="0.01"
+                            value={editForm.data.amount}
+                            onChange={(e) => editForm.setData('amount', e.target.value)}
+                            placeholder="Ej. 35000"
+                        />
+                    </div>
 
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Voucher;
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Inertia\Inertia;
@@ -34,6 +35,7 @@ class VoucherController extends Controller
                     'fecha' => $v->date ? $v->date->format('Y-m-d') : '',
                     'fecha_formateada' => $v->date ? $v->date->format('d-m-Y') : '',
                     'chofer' => $v->user ? "{$v->user->first_name} {$v->user->last_name}" : 'Sin Chofer',
+                    'chofer_user_id' => $v->user_id,
                     'pasajero' => $v->passenger_name ?: 'Sin Pasajero',
                     'empresa' => $v->company ? $v->company->name : ($v->company_name ?: 'Particular'),
                     'company_id' => $v->company_id,
@@ -53,9 +55,17 @@ class VoucherController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $choferes = User::whereHas('role', function ($q) {
+                $q->where('name', 'chofer');
+            })
+            ->where('active', true)
+            ->orderBy('first_name')
+            ->get(['id_usuario', 'first_name', 'last_name']);
+
         return Inertia::render('Operaciones/Vouchers', [
             'vouchers' => $vouchers,
             'companies' => $companies,
+            'choferes' => $choferes,
             'filters' => [
                 'status' => $status,
                 'search' => $search,
@@ -189,6 +199,14 @@ class VoucherController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'nullable|integer|exists:companies,id',
+            'user_id' => 'nullable|integer|exists:users,id_usuario',
+            'passenger_name' => 'nullable|string|max:150',
+            'origin' => 'nullable|string|max:255',
+            'destination' => 'nullable|string|max:255',
+            'pickup_time' => 'nullable|string|max:8',
+            'dropoff_time' => 'nullable|string|max:8',
+            'wait_time' => 'nullable|string|max:20',
+            'date' => 'nullable|date',
             'amount' => 'nullable|numeric|min:0',
             'observation' => 'nullable|string|max:600',
         ]);
@@ -198,6 +216,38 @@ class VoucherController extends Controller
             if ($validated['company_id']) {
                 $voucher->company_name = Company::where('id', $validated['company_id'])->value('name');
             }
+        }
+
+        if (array_key_exists('user_id', $validated) && $validated['user_id']) {
+            $voucher->user_id = $validated['user_id'];
+        }
+
+        if (array_key_exists('passenger_name', $validated)) {
+            $voucher->passenger_name = $validated['passenger_name'];
+        }
+
+        if (array_key_exists('origin', $validated)) {
+            $voucher->origin = $validated['origin'];
+        }
+
+        if (array_key_exists('destination', $validated)) {
+            $voucher->destination = $validated['destination'];
+        }
+
+        if (array_key_exists('pickup_time', $validated)) {
+            $voucher->pickup_time = $validated['pickup_time'];
+        }
+
+        if (array_key_exists('dropoff_time', $validated)) {
+            $voucher->dropoff_time = $validated['dropoff_time'];
+        }
+
+        if (array_key_exists('wait_time', $validated)) {
+            $voucher->wait_time = $validated['wait_time'];
+        }
+
+        if (array_key_exists('date', $validated) && $validated['date']) {
+            $voucher->date = $validated['date'];
         }
 
         if (array_key_exists('amount', $validated)) {
