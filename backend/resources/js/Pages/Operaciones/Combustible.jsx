@@ -141,11 +141,12 @@ export default function Combustible({ remitos = [], filters = {} }) {
 
                                     {item.status === 'pendiente' && (
                                         <Button
-                                            size="sm"
+                                            variant="icon"
                                             onClick={() => handleApprove(item)}
-                                            className="bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-3 py-1.5"
+                                            className="text-verify-700 hover:bg-verify-100 hover:text-verify-700"
+                                            title="Aprobar remito"
                                         >
-                                            Aprobar
+                                            <Check className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
