@@ -15,8 +15,19 @@ class SalaryReceiptResource extends JsonResource
             'employee' => new EmployeeResource($this->whenLoaded('employee')),
             'period' => $this->period,
             'gross_amount' => (float) $this->gross_amount,
+            'non_remunerative_amount' => (float) $this->non_remunerative_amount,
             'deductions_amount' => (float) $this->deductions_amount,
             'net_amount' => (float) $this->net_amount,
+            'concepts' => $this->whenLoaded('concepts', function () {
+                return $this->concepts->map(fn ($c) => [
+                    'code' => $c->code,
+                    'description' => $c->description,
+                    'quantity' => $c->quantity !== null ? (float) $c->quantity : null,
+                    'remunerative_amount' => (float) $c->remunerative_amount,
+                    'non_remunerative_amount' => (float) $c->non_remunerative_amount,
+                    'deduction_amount' => (float) $c->deduction_amount,
+                ]);
+            }),
             'status' => $this->status,
             'file_url' => $this->file_path ? asset('storage/' . $this->file_path) : null,
             'employer_signed' => (bool) $this->employer_signed_at,

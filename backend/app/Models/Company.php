@@ -14,6 +14,8 @@ class Company extends Model
 
     protected $fillable = [
         'name',
+        'cuit',
+        'address',
         'logo_path',
         'logo_blob',
         'logo_mime',

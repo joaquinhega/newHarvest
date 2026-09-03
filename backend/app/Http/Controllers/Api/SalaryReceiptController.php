@@ -8,6 +8,7 @@ use App\Http\Resources\SalaryReceiptResource;
 use App\Models\SalaryReceipt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -62,14 +63,48 @@ class SalaryReceiptController extends Controller
             return $this->errorResponse('No autorizado para emitir recibos de sueldo.', 403);
         }
 
-        $receipt = SalaryReceipt::create($request->validated());
-        $receipt->load('employee');
+        $data = $request->validated();
+        $concepts = $data['concepts'] ?? null;
+        unset($data['concepts']);
+
+        $receipt = DB::transaction(function () use ($data, $concepts) {
+            $receipt = SalaryReceipt::create($data);
+
+            if (! empty($concepts)) {
+                $this->syncConcepts($receipt, $concepts);
+                $receipt->recalculateTotalsFromConcepts()->save();
+            }
+
+            return $receipt;
+        });
+
+        $receipt->load(['employee', 'concepts']);
 
         return $this->successResponse(
             new SalaryReceiptResource($receipt),
             'Recibo de sueldo emitido correctamente',
             201
         );
+    }
+
+    /**
+     * Reemplaza todos los conceptos del recibo por los recibidos, preservando el orden de llegada.
+     */
+    private function syncConcepts(SalaryReceipt $receipt, array $concepts): void
+    {
+        $receipt->concepts()->delete();
+
+        foreach (array_values($concepts) as $index => $concept) {
+            $receipt->concepts()->create([
+                'code' => $concept['code'] ?? null,
+                'description' => $concept['description'],
+                'quantity' => $concept['quantity'] ?? null,
+                'remunerative_amount' => $concept['remunerative_amount'] ?? 0,
+                'non_remunerative_amount' => $concept['non_remunerative_amount'] ?? 0,
+                'deduction_amount' => $concept['deduction_amount'] ?? 0,
+                'sort_order' => $index,
+            ]);
+        }
     }
 
     public function show(Request $request, SalaryReceipt $salaryReceipt): JsonResponse
@@ -85,7 +120,7 @@ class SalaryReceiptController extends Controller
             $salaryReceipt->update(['status' => 'leido']);
         }
 
-        $salaryReceipt->load('employee');
+        $salaryReceipt->load(['employee', 'concepts']);
 
         return $this->successResponse(new SalaryReceiptResource($salaryReceipt), 'Recibo obtenido');
     }
