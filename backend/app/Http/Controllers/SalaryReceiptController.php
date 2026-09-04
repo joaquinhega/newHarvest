@@ -70,6 +70,7 @@ class SalaryReceiptController extends Controller
                     'file_url' => $rec->file_path ? asset('storage/' . $rec->file_path) : null,
                     'employer_signed' => !empty($rec->employer_signed_at),
                     'employer_signed_at' => $rec->employer_signed_at ? $rec->employer_signed_at->format('d/m/Y H:i') : null,
+                    'notified_at' => $rec->notified_at ? $rec->notified_at->format('d/m/Y H:i') : null,
                     'employee_signed' => !empty($rec->employee_signed_at),
                     'employee_signed_at' => $rec->employee_signed_at ? $rec->employee_signed_at->format('d/m/Y H:i') : null,
                     'employee_signature_url' => $rec->employee_signature_path ? asset('storage/' . $rec->employee_signature_path) : null,
@@ -314,16 +315,61 @@ class SalaryReceiptController extends Controller
         ]);
     }
 
+    /**
+     * Firma individual de un recibo (desde el modal de detalle o acciones de fila).
+     */
+    public function signSingle(Request $request, $id)
+    {
+        $receipt = SalaryReceipt::where('borrado', false)
+            ->whereNotIn('status', ['firmado_empresa', 'firmado_empleado', 'archivado'])
+            ->findOrFail($id);
+
+        $user     = $request->user();
+        $now      = now();
+        $modo     = config('newharvest.firma_modo', 'simulado');
+
+        $receipt->update([
+            'employer_signed_at'      => $now,
+            'employer_signature_path' => $modo === 'simulado' ? 'simulado' : null,
+            'status'                  => 'firmado_empresa',
+        ]);
+
+        return redirect()->back()->with('message', "Recibo #{$receipt->id} firmado por {$user->first_name} {$user->last_name}.");
+    }
+
+    /**
+     * Notifica al empleado que tiene un recibo disponible para firmar.
+     * Hoy registra la fecha y queda lista la UI. Push/email se integra en Fase 3.
+     */
+    public function notify(Request $request, $id)
+    {
+        $receipt = SalaryReceipt::where('borrado', false)
+            ->where('status', 'firmado_empresa')
+            ->findOrFail($id);
+
+        $user = $request->user();
+
+        $receipt->update([
+            'status'              => 'notificado',
+            'notified_at'         => now(),
+            'notified_by_user_id' => $user->id_usuario,
+        ]);
+
+        // TODO Fase 3: disparar push Firebase al chofer $receipt->employee->user
+
+        return redirect()->back()->with('message', "Empleado notificado. Cuando Firebase esté configurado recibirá un push.");
+    }
+
     private function formatStatusLabel(?string $status): string
     {
         return match ($status) {
-            'generado' => 'Generado',
-            'notificado' => 'Notificado',
-            'leido' => 'Leído',
-            'firmado_empresa' => 'Firmado — empresa',
-            'firmado_empleado' => 'Firmado — empleado',
-            'archivado' => 'Archivado',
-            default => 'Generado',
+            'generado'         => 'Subido',
+            'notificado'       => 'Notificado',
+            'leido'            => 'Visto por empleado',
+            'firmado_empresa'  => 'Firmado — empresa',
+            'firmado_empleado' => 'Completo',
+            'archivado'        => 'En Drive',
+            default            => 'Subido',
         };
     }
 }
