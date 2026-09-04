@@ -191,26 +191,36 @@ export default function Recibos({
 
     const removePending = (idx) => setPendingFiles(prev => prev.filter((_, i) => i !== idx));
 
-    const handleUploadAll = async () => {
+    const handleUploadAll = () => {
         const invalid = pendingFiles.filter(f => !f.employee_id || !f.period);
         if (invalid.length) { alert('Todos los archivos deben tener empleado y período asignados.'); return; }
 
         setIsUploading(true);
-        for (const pending of pendingFiles) {
-            const fd = new FormData();
-            fd.append('employee_id', pending.employee_id);
-            fd.append('period', pending.period);
-            fd.append('pdf', pending.file);
-            await fetch('/rrhh/recibos/importar', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                body: fd,
+
+        // Sube los archivos de a uno, en secuencia, usando el router de Inertia
+        // (maneja el token CSRF automáticamente vía cookie, sin depender de meta tags).
+        const uploadNext = (index) => {
+            if (index >= pendingFiles.length) {
+                setIsUploading(false);
+                setPendingFiles([]);
+                setIsUploadOpen(false);
+                router.reload({ only: ['recibos', 'metrics'] });
+                return;
+            }
+            const pending = pendingFiles[index];
+            router.post('/rrhh/recibos/importar', {
+                employee_id: pending.employee_id,
+                period: pending.period,
+                pdf: pending.file,
+            }, {
+                forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => uploadNext(index + 1),
             });
-        }
-        setIsUploading(false);
-        setPendingFiles([]);
-        setIsUploadOpen(false);
-        router.reload({ only: ['recibos', 'metrics'] });
+        };
+
+        uploadNext(0);
     };
 
     const tableHeaders = [
