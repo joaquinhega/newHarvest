@@ -41,6 +41,7 @@ export default function Recibos({
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
+    const [showPdfViewer, setShowPdfViewer] = useState(false);
 
     // Formulario de Importación de PDF externo
     const importForm = useForm({
@@ -631,25 +632,52 @@ export default function Recibos({
                 onClose={() => {
                     setIsDetailOpen(false);
                     setSelectedRecibo(null);
+                    setShowPdfViewer(false);
                 }}
                 title={selectedRecibo ? `Recibo de sueldo — ${selectedRecibo.nombre}` : 'Recibo'}
                 subtitle={`Legajo #${String(selectedRecibo?.legajo || '').padStart(3, '0')} · ${selectedRecibo?.period}`}
                 maxWidth="lg"
                 footer={
                     <div className="flex items-center justify-between w-full">
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-950 bg-ink-100 hover:bg-ink-200 px-3.5 py-2 rounded-xl transition-colors font-semibold"
-                        >
-                            <Printer className="w-4 h-4" />
-                            Imprimir recibo
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-950 bg-ink-100 hover:bg-ink-200 px-3.5 py-2 rounded-xl transition-colors font-semibold"
+                            >
+                                <Printer className="w-4 h-4" />
+                                Imprimir recibo
+                            </button>
+                            {/* PDF importado externamente — botón Ver/Ocultar */}
+                            {selectedRecibo?.file_url && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPdfViewer(v => !v)}
+                                    className="inline-flex items-center gap-1.5 text-xs text-brand-700 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors font-semibold border border-brand-200"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    {showPdfViewer ? 'Ocultar PDF' : 'Ver PDF importado'}
+                                </button>
+                            )}
+                            {/* PDF generado por el sistema — descarga directa */}
+                            {selectedRecibo && !selectedRecibo.file_url && (
+                                <a
+                                    href={`/rrhh/recibos/${selectedRecibo.id}/pdf`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs text-brand-700 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors font-semibold border border-brand-200"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Descargar PDF
+                                </a>
+                            )}
+                        </div>
                         <Button
                             variant="ghost"
                             onClick={() => {
                                 setIsDetailOpen(false);
                                 setSelectedRecibo(null);
+                                setShowPdfViewer(false);
                             }}
                         >
                             Cerrar
@@ -740,6 +768,30 @@ export default function Recibos({
                                 </div>
                             </div>
                         </div>
+                        {/* Visor de PDF embebido — solo para recibos importados externamente */}
+                        {showPdfViewer && selectedRecibo?.file_url && (
+                            <div className="rounded-2xl overflow-hidden border border-ink-200 shadow-sm">
+                                <div className="flex items-center justify-between px-4 py-2 bg-ink-50 border-b border-ink-200">
+                                    <span className="text-xs font-semibold text-ink-600 flex items-center gap-1.5">
+                                        <FileText className="w-3.5 h-3.5" />
+                                        PDF importado
+                                    </span>
+                                    <a
+                                        href={selectedRecibo.file_url}
+                                        download
+                                        className="text-xs text-brand-700 hover:text-brand-900 font-semibold flex items-center gap-1"
+                                    >
+                                        ↓ Descargar
+                                    </a>
+                                </div>
+                                <iframe
+                                    src={selectedRecibo.file_url}
+                                    title="Recibo de sueldo"
+                                    className="w-full"
+                                    style={{ height: '520px', border: 'none' }}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </Modal>
