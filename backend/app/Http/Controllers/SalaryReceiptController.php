@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\SalaryReceipt;
+use App\Services\SalaryReceiptPdfSplitter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -149,6 +151,77 @@ class SalaryReceiptController extends Controller
         ]);
 
         return redirect()->back()->with('message', "Recibo #{$receipt->id} importado correctamente.");
+    }
+
+    /**
+     * Paso 1 de la importación masiva: recibe UN PDF con todos los recibos
+     * de la nómina (formato típico de exportación del liquidador de sueldos),
+     * lo guarda temporalmente y devuelve la detección automática por CUIL
+     * para que RRHH revise/corrija antes de confirmar. No crea nada en DB.
+     */
+    public function analyzeBulk(Request $request, SalaryReceiptPdfSplitter $splitter)
+    {
+        $request->validate([
+            'pdf' => ['required', 'file', 'mimes:pdf', 'max:20480'], // máx 20 MB
+        ]);
+
+        $tempPath = $request->file('pdf')->store('receipts/tmp', 'local');
+        $absolutePath = Storage::disk('local')->path($tempPath);
+
+        $result = $splitter->analyze($absolutePath);
+
+        return response()->json([
+            'temp_token'       => $tempPath,
+            'total_pages'      => $result['total_pages'],
+            'suggested_period' => $result['suggested_period'],
+            'groups'           => $result['groups'],
+        ]);
+    }
+
+    /**
+     * Paso 2: con el temp_token del análisis y los grupos ya revisados/
+     * corregidos por RRHH, divide el PDF y crea un SalaryReceipt por
+     * cada grupo confirmado con empleado asignado.
+     */
+    public function confirmBulk(Request $request, SalaryReceiptPdfSplitter $splitter)
+    {
+        $validated = $request->validate([
+            'temp_token'              => ['required', 'string'],
+            'period'                  => ['required', 'string', 'max:50'],
+            'groups'                  => ['required', 'array', 'min:1'],
+            'groups.*.employee_id'    => ['required', 'exists:employees,id'],
+            'groups.*.pages'          => ['required', 'array', 'min:1'],
+            'groups.*.pages.*'        => ['required', 'integer', 'min:1'],
+        ]);
+
+        if (! Storage::disk('local')->exists($validated['temp_token'])) {
+            return redirect()->back()->withErrors(['temp_token' => 'El archivo temporal expiró, volvé a subir el PDF.']);
+        }
+
+        $sourcePath = Storage::disk('local')->path($validated['temp_token']);
+        $created = 0;
+
+        foreach ($validated['groups'] as $group) {
+            $fileName = 'receipts/' . uniqid('bulk_', true) . '.pdf';
+            $destPath = Storage::disk('public')->path($fileName);
+            $splitter->extractPages($sourcePath, $group['pages'], $destPath);
+
+            SalaryReceipt::create([
+                'employee_id'       => $group['employee_id'],
+                'period'            => $validated['period'],
+                'gross_amount'      => 0,
+                'deductions_amount' => 0,
+                'net_amount'        => 0,
+                'file_path'         => $fileName,
+                'status'            => 'generado',
+                'borrado'           => false,
+            ]);
+            $created++;
+        }
+
+        Storage::disk('local')->delete($validated['temp_token']);
+
+        return redirect()->back()->with('message', "{$created} recibos importados y divididos correctamente.");
     }
 
     /**

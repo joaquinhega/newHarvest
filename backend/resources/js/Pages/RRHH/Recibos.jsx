@@ -8,7 +8,7 @@ import Table from '@/Components/UI/Table';
 import {
     Eye, Trash2, Search, FileSpreadsheet, FileText,
     CheckCircle2, Clock, Upload, ShieldCheck, Bell,
-    ChevronLeft, ChevronRight, MoreVertical, Pen,
+    ChevronLeft, ChevronRight, MoreVertical, Pen, Layers, Loader2,
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -72,6 +72,16 @@ export default function Recibos({
     const [isSigning, setIsSigning]             = useState(false);
     const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false);
     const detailMenuRef = useRef(null);
+
+    // Importación masiva: PDF único con todos los empleados, dividido automáticamente
+    const [isBulkOpen, setIsBulkOpen] = useState(false);
+    const [bulkStep, setBulkStep] = useState('upload'); // 'upload' | 'analyzing' | 'review' | 'confirming'
+    const [bulkFile, setBulkFile] = useState(null);
+    const [bulkToken, setBulkToken] = useState(null);
+    const [bulkGroups, setBulkGroups] = useState([]);
+    const [bulkPeriod, setBulkPeriod] = useState('');
+    const [bulkError, setBulkError] = useState('');
+    const bulkFileInputRef = useRef(null);
 
     // Navegación por período (línea de tiempo)
     const initialPeriod = (filters.period && filters.period !== 'todos') ? filters.period : getCurrentPeriod();
@@ -223,6 +233,69 @@ export default function Recibos({
         uploadNext(0);
     };
 
+    // --- Importación masiva con división automática ---
+    const resetBulk = () => {
+        setBulkStep('upload');
+        setBulkFile(null);
+        setBulkToken(null);
+        setBulkGroups([]);
+        setBulkPeriod('');
+        setBulkError('');
+    };
+
+    const handleBulkFileSelected = (e) => {
+        const file = e.target.files[0];
+        if (file) setBulkFile(file);
+        e.target.value = '';
+    };
+
+    const handleBulkAnalyze = async () => {
+        if (!bulkFile) return;
+        setBulkStep('analyzing');
+        setBulkError('');
+        const fd = new FormData();
+        fd.append('pdf', bulkFile);
+        try {
+            const { data } = await window.axios.post('/rrhh/recibos/importar-masivo/analizar', fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setBulkToken(data.temp_token);
+            setBulkPeriod(data.suggested_period || '');
+            setBulkGroups(data.groups.map(g => ({ ...g, include: g.matched })));
+            setBulkStep('review');
+        } catch (err) {
+            setBulkError(err.response?.data?.message || 'No se pudo analizar el PDF. Verificá que sea un archivo válido.');
+            setBulkStep('upload');
+        }
+    };
+
+    const updateBulkGroup = (idx, field, value) => {
+        setBulkGroups(prev => prev.map((g, i) => i === idx ? { ...g, [field]: value } : g));
+    };
+
+    const handleBulkConfirm = async () => {
+        const included = bulkGroups.filter(g => g.include);
+        if (!bulkPeriod) { setBulkError('Elegí el período de estos recibos.'); return; }
+        if (included.some(g => !g.employee_id)) { setBulkError('Todos los recibos incluidos necesitan un empleado asignado.'); return; }
+        if (included.length === 0) { setBulkError('No hay recibos seleccionados para importar.'); return; }
+
+        setBulkStep('confirming');
+        setBulkError('');
+        try {
+            await window.axios.post('/rrhh/recibos/importar-masivo/confirmar', {
+                temp_token: bulkToken,
+                period: bulkPeriod,
+                groups: included.map(g => ({ employee_id: g.employee_id, pages: g.pages })),
+            });
+            setIsBulkOpen(false);
+            resetBulk();
+            router.reload({ only: ['recibos', 'metrics'] });
+        } catch (err) {
+            setBulkError(err.response?.data?.message || 'No se pudo completar la importación.');
+            setBulkStep('review');
+        }
+    };
+
     const tableHeaders = [
         { label: <input type="checkbox" onChange={handleSelectAll} checked={filteredRecibos.length > 0 && selectedIds.length === filteredRecibos.length} className="rounded border-ink-300 accent-brand-600 cursor-pointer" />, className: 'w-10' },
         'Colaborador', 'Estado',
@@ -237,6 +310,9 @@ export default function Recibos({
                 <div className="flex items-center gap-2">
                     <Button variant="secondary" onClick={handleExport}>
                         <FileSpreadsheet className="w-4 h-4 text-verify-700" /> Exportar Excel
+                    </Button>
+                    <Button variant="secondary" onClick={() => { resetBulk(); setIsBulkOpen(true); }}>
+                        <Layers className="w-4 h-4" /> Importar PDF masivo
                     </Button>
                     <Button onClick={() => setIsUploadOpen(true)}>
                         <Upload className="w-4 h-4" /> Subir recibos
@@ -765,6 +841,144 @@ export default function Recibos({
                         </div>
                     </div>
                 </div>
+            </Modal>
+
+            {/* MODAL: IMPORTACIÓN MASIVA CON DIVISIÓN AUTOMÁTICA */}
+            <Modal
+                isOpen={isBulkOpen}
+                onClose={() => { if (bulkStep !== 'analyzing' && bulkStep !== 'confirming') { setIsBulkOpen(false); resetBulk(); } }}
+                title="Importar PDF masivo"
+                subtitle="Subí el archivo único del liquidador con todos los empleados — el sistema detecta y separa cada recibo por CUIL"
+                maxWidth="2xl"
+                footer={
+                    <div className="flex items-center justify-between w-full">
+                        <div className="text-xs text-danger-600">{bulkError}</div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" disabled={bulkStep === 'analyzing' || bulkStep === 'confirming'} onClick={() => { setIsBulkOpen(false); resetBulk(); }}>
+                                Cancelar
+                            </Button>
+                            {bulkStep === 'upload' && (
+                                <Button disabled={!bulkFile} onClick={handleBulkAnalyze}>
+                                    <Layers className="w-4 h-4" /> Analizar y detectar
+                                </Button>
+                            )}
+                            {bulkStep === 'review' && (
+                                <Button onClick={handleBulkConfirm}>
+                                    <Upload className="w-4 h-4" />
+                                    Confirmar e importar ({bulkGroups.filter(g => g.include).length})
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                }
+            >
+                {bulkStep === 'upload' && (
+                    <div
+                        className="border-2 border-dashed border-ink-200 rounded-2xl p-10 text-center hover:border-brand-400 transition-colors cursor-pointer"
+                        onClick={() => bulkFileInputRef.current?.click()}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && f.type === 'application/pdf') setBulkFile(f); }}
+                    >
+                        <input ref={bulkFileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleBulkFileSelected} />
+                        <Layers className="w-10 h-10 text-ink-300 mx-auto mb-3" />
+                        {bulkFile ? (
+                            <p className="text-sm font-semibold text-brand-700">{bulkFile.name}</p>
+                        ) : (
+                            <>
+                                <p className="text-sm font-semibold text-ink-600">Arrastrá acá el PDF con todos los recibos del período</p>
+                                <p className="text-xs text-ink-400 mt-1">Un solo archivo · Máximo 20 MB · El sistema busca el CUIL de cada empleado dentro del PDF</p>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {bulkStep === 'analyzing' && (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+                        <p className="text-sm text-ink-600 font-medium">Leyendo el PDF y detectando cada recibo por CUIL...</p>
+                    </div>
+                )}
+
+                {bulkStep === 'confirming' && (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+                        <p className="text-sm text-ink-600 font-medium">Dividiendo el PDF y creando los recibos...</p>
+                    </div>
+                )}
+
+                {bulkStep === 'review' && (
+                    <div className="space-y-4">
+                        {/* Período del lote */}
+                        <div className="flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-xl px-4 py-3">
+                            <span className="text-xs font-semibold text-brand-800 shrink-0">Período de estos recibos:</span>
+                            <select
+                                value={bulkPeriod.split(' ')[0] || ''}
+                                onChange={e => { const y = bulkPeriod.split(' ')[1] || new Date().getFullYear(); setBulkPeriod(`${e.target.value} ${y}`); }}
+                                className="text-xs border border-brand-300 bg-white rounded-lg px-2.5 py-1.5 focus:outline-none"
+                            >
+                                <option value="">Mes</option>
+                                {ALL_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                            <select
+                                value={bulkPeriod.split(' ')[1] || ''}
+                                onChange={e => { const m = bulkPeriod.split(' ')[0] || ALL_MONTHS[new Date().getMonth()]; setBulkPeriod(`${m} ${e.target.value}`); }}
+                                className="text-xs border border-brand-300 bg-white rounded-lg px-2.5 py-1.5 focus:outline-none"
+                            >
+                                <option value="">Año</option>
+                                {getYearOptions().map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+
+                        <p className="text-xs text-ink-500">
+                            Se detectaron <strong>{bulkGroups.length}</strong> recibos en el PDF.
+                            {' '}{bulkGroups.filter(g => g.matched).length} coincidieron con un empleado automáticamente.
+                            Revisá y corregí los que no, o desmarcalos para excluirlos de esta importación.
+                        </p>
+
+                        <div className="max-h-96 overflow-y-auto space-y-2">
+                            {bulkGroups.map((g, idx) => (
+                                <div
+                                    key={idx}
+                                    className={cn(
+                                        'flex items-center gap-3 rounded-xl border px-3.5 py-2.5',
+                                        g.include ? 'bg-white border-ink-100' : 'bg-ink-50 border-ink-100 opacity-50'
+                                    )}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={g.include}
+                                        onChange={e => updateBulkGroup(idx, 'include', e.target.checked)}
+                                        className="rounded border-ink-300 accent-brand-600 cursor-pointer shrink-0"
+                                    />
+                                    <div className="w-24 shrink-0">
+                                        <p className="text-[10px] text-ink-400 uppercase font-semibold">CUIL detectado</p>
+                                        <p className="text-xs font-mono text-ink-700">{g.cuil_formatted}</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        <select
+                                            disabled={!g.include}
+                                            value={g.employee_id || ''}
+                                            onChange={e => updateBulkGroup(idx, 'employee_id', e.target.value)}
+                                            className={cn(
+                                                'w-full text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none',
+                                                g.matched ? 'border-verify-300 bg-verify-50' : 'border-pending-300 bg-pending-50'
+                                            )}
+                                        >
+                                            <option value="">Sin coincidencia — elegí empleado...</option>
+                                            {employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.last_name}, {emp.first_name} — Legajo {emp.id}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="w-20 shrink-0 text-right">
+                                        <p className="text-[10px] text-ink-400 uppercase font-semibold">Páginas</p>
+                                        <p className="text-xs text-ink-600 font-mono">{g.pages.join(', ')}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </Modal>
         </AuthenticatedLayout>
     );
