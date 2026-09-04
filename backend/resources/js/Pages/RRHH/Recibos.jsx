@@ -132,7 +132,7 @@ export default function Recibos({
             const matchPeriod = showAllPeriods || item.period === activePeriod;
             return matchSearch && matchStatus && matchPeriod;
         });
-    }, [recibos, searchTerm, statusFilter, activePeriod]);
+    }, [recibos, searchTerm, statusFilter, activePeriod, showAllPeriods]);
 
     const handleSelectAll = (e) => setSelectedIds(e.target.checked ? filteredRecibos.map(r => r.id) : []);
     const handleSelectRow = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
