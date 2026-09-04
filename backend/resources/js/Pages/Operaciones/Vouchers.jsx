@@ -307,61 +307,51 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             {/* Modal Detalle */}
             <Modal
                 isOpen={isDetailOpen}
-                onClose={() => {
-                    setIsDetailOpen(false);
-                    setSelectedVoucher(null);
-                }}
+                onClose={() => { setIsDetailOpen(false); setSelectedVoucher(null); }}
                 title={`Voucher #${selectedVoucher?.remito_code}`}
-                subtitle={`Registrado el ${selectedVoucher?.fecha_formateada}`}
+                subtitle={selectedVoucher?.fecha_formateada}
                 maxWidth="lg"
                 footer={
                     <div className="w-full flex items-center justify-between">
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                setIsDetailOpen(false);
-                                setSelectedVoucher(null);
-                            }}
-                        >
-                            Cerrar
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" onClick={() => { setIsDetailOpen(false); setSelectedVoucher(null); }}>
+                                Cerrar
+                            </Button>
+                            {selectedVoucher?.company_id && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.get('/empresas', { highlight: selectedVoucher.company_id })}
+                                    className="gap-1.5"
+                                >
+                                    <Building2 className="w-4 h-4" />
+                                    Ir a empresa
+                                </Button>
+                            )}
+                        </div>
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => {
-                                    setIsDetailOpen(false);
-                                    handleOpenEdit(selectedVoucher);
-                                }}
+                                onClick={() => window.open(`/vouchers/${selectedVoucher?.id}/pdf`, '_blank')}
+                                className="gap-1.5"
+                            >
+                                <FileDown className="w-4 h-4" />
+                                PDF
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => { setIsDetailOpen(false); handleOpenEdit(selectedVoucher); }}
                                 className="gap-1.5"
                             >
                                 <Pencil className="w-4 h-4" />
                                 Editar
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => window.open(`/vouchers/${selectedVoucher?.id}/pdf`, '_blank')}
-                                                            className="gap-1.5"
-                                                        >
-                                                            <FileDown className="w-4 h-4" />
-                                                            Descargar PDF
-                                                        </Button>
                             </Button>
                             {selectedVoucher?.status === 'pendiente' ? (
-                                <Button
-                                    variant="verify"
-                                    onClick={() => {
-                                        handleApprove(selectedVoucher);
-                                    }}
-                                    className="gap-1.5"
-                                >
+                                <Button variant="verify" onClick={() => handleApprove(selectedVoucher)} className="gap-1.5">
                                     <Check className="w-4 h-4" />
-                                    Aprobar voucher
+                                    Aprobar
                                 </Button>
                             ) : (
-                                <Button
-                                    variant="danger"
-                                    onClick={() => handleDisapprove(selectedVoucher)}
-                                    className="gap-1.5"
-                                >
+                                <Button variant="danger" onClick={() => handleDisapprove(selectedVoucher)} className="gap-1.5">
                                     <RotateCcw className="w-4 h-4" />
                                     Desaprobar
                                 </Button>
@@ -371,97 +361,39 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                 }
             >
                 {selectedVoucher && (
-                    <div className="space-y-4 text-xs">
-                        {/* Header con Estado y Firma */}
-                        <div className="flex justify-between items-start bg-ink-50 p-3 rounded-2xl border border-ink-100">
-                            <div>
-                                <p className="text-[10px] uppercase font-bold text-ink-500">ID Remito</p>
-                                <p className="text-sm font-mono font-bold text-brand-700">{selectedVoucher.remito_code}</p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <Badge variant={selectedVoucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
-                                    {selectedVoucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente de aprobación'}
-                                </Badge>
-                                {selectedVoucher.firma && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-verify-700">
-                                        <PenTool className="w-3 h-3" /> Firmado ✓
-                                    </span>
-                                )}
-                            </div>
+                    <div className="text-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <Badge variant={selectedVoucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
+                                {selectedVoucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente'}
+                            </Badge>
+                            {selectedVoucher.firma && (
+                                <span className="text-xs text-verify-700 font-semibold flex items-center gap-1">
+                                    <PenTool className="w-3.5 h-3.5" /> Con firma del pasajero
+                                </span>
+                            )}
                         </div>
 
-                        {/* Fecha y Pasajero */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Fecha</p>
-                                <p className="font-semibold text-ink-950">{selectedVoucher.fecha_formateada}</p>
-                            </div>
-                            <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Pasajero</p>
-                                <p className="font-semibold text-ink-950">{selectedVoucher.pasajero}</p>
-                            </div>
-                        </div>
-
-                        {/* Empresa */}
-                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                            <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
-                                <Building2 className="w-3 h-3 text-brand-600" /> Empresa
-                            </p>
-                            <p className="font-semibold text-ink-950">{selectedVoucher.empresa}</p>
-                        </div>
-
-                        {/* Itinerario */}
-                        <div className="p-3.5 rounded-xl border border-ink-100 bg-[#FAF9FB] space-y-2">
-                            <p className="text-[10px] uppercase font-bold text-ink-500">Itinerario y Hoja de Ruta</p>
-                            <div className="flex items-start gap-2">
-                                <MapPin className="w-4 h-4 text-verify-700 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold text-ink-950">Origen: {selectedVoucher.origen}</p>
-                                    <p className="text-ink-500 font-mono text-[11px]">Salida: {selectedVoucher.hora_origen} hs</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-2 pt-1 border-t border-ink-200/50">
-                                <MapPin className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold text-ink-950">Destino: {selectedVoucher.destino}</p>
-                                    <p className="text-ink-500 font-mono text-[11px]">Llegada: {selectedVoucher.hora_destino} hs</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Importe */}
-                        <div className="p-3 rounded-xl border border-brand-200 bg-brand-50/50">
-                            <p className="text-[10px] uppercase font-bold text-brand-700 mb-1">Importe Total</p>
-                            <p className="font-mono font-bold text-lg text-brand-700">
-                                $ {selectedVoucher.monto.toLocaleString('es-AR')}
-                            </p>
-                        </div>
-
-                        {/* Chofer */}
-                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                            <p className="text-[10px] uppercase font-bold text-ink-500 flex items-center gap-1 mb-1">
-                                <User className="w-3 h-3 text-brand-600" /> Chofer Responsable
-                            </p>
-                            <p className="font-semibold text-ink-950">{selectedVoucher.chofer}</p>
-                        </div>
-
-                        {/* Tiempo Espera */}
-                        {selectedVoucher.tiempo_espera > 0 && (
-                            <div className="p-3 rounded-xl border border-pending-200 bg-pending-50/50 flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-pending-700 shrink-0" />
-                                <div>
-                                    <p className="text-[10px] uppercase font-bold text-pending-700">Tiempo de Espera</p>
-                                    <p className="font-semibold text-ink-950">{selectedVoucher.tiempo_espera} minutos</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Observaciones */}
-                        <div className="p-3 rounded-xl border border-ink-100 bg-white">
-                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Observaciones</p>
-                            <p className="text-ink-700 italic">{selectedVoucher.observaciones || 'Sin observaciones registradas.'}</p>
-                        </div>
-
+                        <table className="w-full text-sm border-collapse">
+                            <tbody>
+                                {[
+                                    ['Remito', selectedVoucher.remito_code],
+                                    ['Fecha', selectedVoucher.fecha_formateada],
+                                    ['Empresa', selectedVoucher.empresa],
+                                    ['Origen', `${selectedVoucher.origen}${selectedVoucher.hora_origen && selectedVoucher.hora_origen !== '--:--' ? ` · ${selectedVoucher.hora_origen} hs` : ''}`],
+                                    ['Destino', `${selectedVoucher.destino}${selectedVoucher.hora_destino && selectedVoucher.hora_destino !== '--:--' ? ` · ${selectedVoucher.hora_destino} hs` : ''}`],
+                                    ['Importe', `$ ${selectedVoucher.monto.toLocaleString('es-AR')}`],
+                                    ['Chofer', selectedVoucher.chofer],
+                                    ...(selectedVoucher.tiempo_espera > 0 ? [['Espera', `${selectedVoucher.tiempo_espera} min`]] : []),
+                                    ['Pasajero', selectedVoucher.pasajero],
+                                    ...(selectedVoucher.observaciones ? [['Observaciones', selectedVoucher.observaciones]] : []),
+                                ].map(([label, value]) => (
+                                    <tr key={label} className="border-b border-ink-100 last:border-0">
+                                        <td className="py-2.5 pr-4 text-xs font-semibold text-ink-500 uppercase tracking-wider w-32 align-top">{label}</td>
+                                        <td className="py-2.5 text-ink-950 font-medium">{value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </Modal>
@@ -624,84 +556,40 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             {/* Modal Confirmación de Aprobación */}
             <Modal
                 isOpen={isApproveModalOpen}
-                onClose={() => {
-                    setIsApproveModalOpen(false);
-                    setVoucherToApprove(null);
-                }}
-                title="Confirmar Aprobación del Voucher"
-                subtitle="Revisa los datos antes de aprobar"
-                maxWidth="md"
+                onClose={() => { setIsApproveModalOpen(false); setVoucherToApprove(null); }}
+                title="Confirmar aprobación"
+                maxWidth="sm"
                 footer={
                     <div className="flex items-center gap-2 justify-end">
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                setIsApproveModalOpen(false);
-                                setVoucherToApprove(null);
-                            }}
-                        >
+                        <Button variant="ghost" onClick={() => { setIsApproveModalOpen(false); setVoucherToApprove(null); }}>
                             Cancelar
                         </Button>
-                        <Button
-                            variant="verify"
-                            onClick={handleConfirmApprove}
-                            className="gap-1.5"
-                        >
+                        <Button variant="verify" onClick={handleConfirmApprove} className="gap-1.5">
                             <Check className="w-4 h-4" />
-                            Aprobar Ahora
+                            Aprobar
                         </Button>
                     </div>
                 }
             >
                 {voucherToApprove && (
-                    <div className="space-y-3 text-sm">
-                        <div className="bg-verify-50 border border-verify-200 rounded-xl p-3.5">
-                            <div className="flex items-start gap-3">
-                                <Check className="w-5 h-5 text-verify-700 shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold text-verify-950">Revisá estos datos antes de confirmar</p>
-                                    <p className="text-xs text-verify-700 mt-0.5">Una vez aprobado, el voucher quedará registrado en el sistema.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Remito</p>
-                                <p className="font-mono font-bold text-brand-600">{voucherToApprove.remito_code}</p>
-                            </div>
-                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Fecha</p>
-                                <p className="font-semibold text-ink-950">{voucherToApprove.fecha_formateada}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Pasajero</p>
-                            <p className="font-semibold text-ink-950">{voucherToApprove.pasajero}</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Empresa</p>
-                                <p className="font-semibold text-ink-950">{voucherToApprove.empresa}</p>
-                            </div>
-                            <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                                <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Chofer</p>
-                                <p className="font-semibold text-ink-950">{voucherToApprove.chofer}</p>
-                            </div>
-                        </div>
-
-                        <div className="p-3 rounded-lg border border-brand-200 bg-brand-50">
-                            <p className="text-[10px] uppercase font-bold text-brand-700 mb-1">Importe</p>
-                            <p className="font-mono font-bold text-lg text-brand-700">$ {voucherToApprove.monto.toLocaleString('es-AR')}</p>
-                        </div>
-
-                        <div className="p-3 rounded-lg border border-ink-100 bg-white">
-                            <p className="text-[10px] uppercase font-bold text-ink-500 mb-1">Ruta</p>
-                            <p className="font-semibold text-ink-950">{voucherToApprove.origen} <span className="text-brand-600">→</span> {voucherToApprove.destino}</p>
-                        </div>
-                    </div>
+                    <table className="w-full text-sm border-collapse">
+                        <tbody>
+                            {[
+                                ['Remito', voucherToApprove.remito_code],
+                                ['Fecha', voucherToApprove.fecha_formateada],
+                                ['Empresa', voucherToApprove.empresa],
+                                ['Ruta', `${voucherToApprove.origen} → ${voucherToApprove.destino}`],
+                                ['Chofer', voucherToApprove.chofer],
+                                ['Pasajero', voucherToApprove.pasajero],
+                                ['Importe', `$ ${voucherToApprove.monto.toLocaleString('es-AR')}`],
+                            ].map(([label, value]) => (
+                                <tr key={label} className="border-b border-ink-100 last:border-0">
+                                    <td className="py-2.5 pr-4 text-xs font-semibold text-ink-500 uppercase tracking-wider w-24">{label}</td>
+                                    <td className="py-2.5 text-ink-950 font-medium">{value}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </Modal>
         </AuthenticatedLayout>

@@ -655,197 +655,91 @@ export default function Recibos({
             {/* MODAL: DOCUMENTO Y CIRCUITO DE FIRMAS */}
             <Modal
                 isOpen={isDetailOpen}
-                onClose={() => {
-                    setIsDetailOpen(false);
-                    setSelectedRecibo(null);
-                    setShowPdfViewer(false);
-                }}
-                title={selectedRecibo ? `Recibo de sueldo — ${selectedRecibo.nombre}` : 'Recibo'}
-                subtitle={`Legajo #${String(selectedRecibo?.legajo || '').padStart(3, '0')} · ${selectedRecibo?.period}`}
-                maxWidth="lg"
+                onClose={() => { setIsDetailOpen(false); setSelectedRecibo(null); setShowPdfViewer(false); }}
+                title={selectedRecibo ? `${selectedRecibo.nombre} · ${selectedRecibo.period}` : 'Recibo'}
+                subtitle={`Legajo #${String(selectedRecibo?.legajo || '').padStart(3, '0')}`}
+                maxWidth="xl"
                 footer={
                     <div className="flex items-center justify-between w-full">
+                        <Button variant="ghost" onClick={() => { setIsDetailOpen(false); setSelectedRecibo(null); setShowPdfViewer(false); }}>
+                            Cerrar
+                        </Button>
                         <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => window.print()}
-                                className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-950 bg-ink-100 hover:bg-ink-200 px-3.5 py-2 rounded-xl transition-colors font-semibold"
-                            >
-                                <Printer className="w-4 h-4" />
-                                Imprimir recibo
-                            </button>
-                            {/* PDF importado externamente — botón Ver/Ocultar */}
-                            {selectedRecibo?.file_url && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPdfViewer(v => !v)}
-                                    className="inline-flex items-center gap-1.5 text-xs text-brand-700 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors font-semibold border border-brand-200"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    {showPdfViewer ? 'Ocultar PDF' : 'Ver PDF importado'}
-                                </button>
-                            )}
-                            {/* PDF generado por el sistema — descarga directa */}
-                            {selectedRecibo && !selectedRecibo.file_url && (
-                                <a
-                                    href={`/rrhh/recibos/${selectedRecibo.id}/pdf`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 text-xs text-brand-700 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors font-semibold border border-brand-200"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Descargar PDF
+                            {selectedRecibo?.file_url ? (
+                                <a href={selectedRecibo.file_url} download className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors">
+                                    <FileText className="w-4 h-4" /> Descargar PDF
+                                </a>
+                            ) : (
+                                <a href={`/rrhh/recibos/${selectedRecibo?.id}/pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 border border-brand-200 bg-brand-50 hover:bg-brand-100 px-3.5 py-2 rounded-xl transition-colors">
+                                    <FileText className="w-4 h-4" /> Generar PDF
                                 </a>
                             )}
                         </div>
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                setIsDetailOpen(false);
-                                setSelectedRecibo(null);
-                                setShowPdfViewer(false);
-                            }}
-                        >
-                            Cerrar
-                        </Button>
                     </div>
                 }
             >
                 {selectedRecibo && (
-                    <div className="space-y-4 text-sm">
-                        {/* Stepper de 6 Etapas */}
-                        <div>
-                            <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-2">
-                                Circuito de Validez Legal
-                            </p>
-                            <div className="flex flex-wrap items-center gap-1.5 bg-ink-50 p-3 rounded-2xl border border-ink-100">
-                                {stepsCircuit.map((step, idx) => {
-                                    const currentIdx = getStepIndex(selectedRecibo.status);
-                                    const isPassed = idx <= currentIdx;
-                                    return (
-                                        <React.Fragment key={step}>
-                                            <span className={cn(
-                                                "text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full transition-colors",
-                                                isPassed ? "bg-brand-600 text-white" : "bg-ink-200 text-ink-500"
-                                            )}>
-                                                {step}
-                                            </span>
-                                            {idx < stepsCircuit.length - 1 && (
-                                                <span className="text-ink-300 text-xs font-bold">→</span>
-                                            )}
-                                        </React.Fragment>
-                                    );
-                                })}
-                            </div>
+                    <div className="space-y-4">
+                        {/* Circuito de firmas — compacto */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {stepsCircuit.map((step, idx) => {
+                                const isPassed = idx <= getStepIndex(selectedRecibo.status);
+                                return (
+                                    <React.Fragment key={step}>
+                                        <span className={cn(
+                                            "text-[10px] font-semibold px-2.5 py-1 rounded-full",
+                                            isPassed ? "bg-brand-600 text-white" : "bg-ink-100 text-ink-400"
+                                        )}>{step}</span>
+                                        {idx < stepsCircuit.length - 1 && <span className="text-ink-300 text-xs">→</span>}
+                                    </React.Fragment>
+                                );
+                            })}
                         </div>
 
-                        {/* Ficha formato Documental Membretada */}
-                        <div className="bg-white border border-ink-300 rounded-2xl p-6 font-mono text-[11px] leading-relaxed shadow-sm text-ink-950 space-y-1">
-                            <p className="font-bold text-xs tracking-tight text-brand-700 font-display">NEW HARVEST S.A.</p>
-                            <p>AV. ESPAÑA 1248 PISO 4 OF. 53 — MENDOZA</p>
-                            <p>C.U.I.T. N°: 30-71129168-3</p>
-                            <hr className="my-2 border-ink-200" />
-                            <p><span className="text-ink-500 font-semibold">N° LEGAJO:</span> #{selectedRecibo.legajo} &nbsp;&nbsp; <span className="text-ink-500 font-semibold">NOMBRE:</span> {selectedRecibo.nombre_completo.toUpperCase()}</p>
-                            <p><span className="text-ink-500 font-semibold">CUIL:</span> {selectedRecibo.cuil} &nbsp;&nbsp; <span className="text-ink-500 font-semibold">FUNCIÓN:</span> {selectedRecibo.puesto.toUpperCase()}</p>
-                            <p><span className="text-ink-500 font-semibold">LIQ. CORRESPONDIENTE:</span> {selectedRecibo.period.toUpperCase()} Y 1° SAC</p>
-                            <hr className="my-2 border-ink-200" />
-                            
-                            <div className="py-2 space-y-1 bg-ink-50/50 px-3 rounded-lg border border-ink-100">
-                                <div className="flex justify-between">
-                                    <span className="text-ink-600 font-medium">Sueldo Bruto:</span>
-                                    <span>{selectedRecibo.gross_formatted}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-ink-600 font-medium">Deducciones / Retenciones:</span>
-                                    <span className="text-danger-700">-{selectedRecibo.deductions_formatted}</span>
-                                </div>
-                                <hr className="my-1 border-ink-200" />
-                                <div className="flex justify-between font-bold text-xs text-brand-700">
-                                    <span>IMPORTE NETO A COBRAR:</span>
-                                    <span>{selectedRecibo.net_formatted}</span>
-                                </div>
-                            </div>
+                        {/* Estado de firmas */}
+                        <table className="w-full text-sm border-collapse">
+                            <tbody>
+                                {[
+                                    ['Empleado', selectedRecibo.nombre_completo],
+                                    ['CUIL', selectedRecibo.cuil],
+                                    ['Período', selectedRecibo.period],
+                                    ['Bruto', selectedRecibo.gross_formatted],
+                                    ['Deducciones', selectedRecibo.deductions_formatted],
+                                    ['Neto', selectedRecibo.net_formatted],
+                                    ['Firma empresa', selectedRecibo.employer_signed ? `✓ ${selectedRecibo.employer_signed_at}` : 'Pendiente'],
+                                    ['Firma empleado', selectedRecibo.employee_signed ? `✓ ${selectedRecibo.employee_signed_at}` : 'Pendiente'],
+                                ].map(([label, value]) => (
+                                    <tr key={label} className="border-b border-ink-100 last:border-0">
+                                        <td className="py-2 pr-4 text-xs font-semibold text-ink-500 uppercase tracking-wider w-32">{label}</td>
+                                        <td className="py-2 text-ink-950 font-medium text-sm">{value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
 
-                            {/* Firmas al pie */}
-                            <div className="grid grid-cols-2 gap-6 pt-6 mt-4 border-t border-dashed border-ink-300 text-center">
-                                <div>
-                                    <div className="border-b border-ink-400 mb-1.5 h-6 flex items-end justify-center">
-                                        {selectedRecibo.employer_signed ? (
-                                            <span className="text-[9px] text-verify-700 font-sans font-bold">
-                                                ✓ Firmado por Apoderado ({selectedRecibo.employer_signed_at})
-                                            </span>
-                                        ) : (
-                                            <span className="text-[9px] text-ink-400 italic">Pendiente de firma empresa</span>
-                                        )}
-                                    </div>
-                                    <p className="text-[9px] text-ink-500 uppercase font-semibold">Firma del Empleador (Apoderado)</p>
-                                </div>
-                                <div>
-                                    <div className="border-b border-ink-400 mb-1.5 h-6 flex items-end justify-center">
-                                        {selectedRecibo.employee_signed ? (
-                                            <span className="text-[9px] text-verify-700 font-sans font-bold">
-                                                ✓ Conforme por {selectedRecibo.nombre_completo}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[9px] text-ink-400 italic">Pendiente de firma chofer</span>
-                                        )}
-                                    </div>
-                                    <p className="text-[9px] text-ink-500 uppercase font-semibold">Firma del Colaborador (Recibí Conforme)</p>
-                                </div>
-                            </div>
-                        </div>
+                        {/* PDF embebido siempre visible si existe */}
+                        {selectedRecibo.file_url && (
+                            <iframe
+                                src={selectedRecibo.file_url}
+                                title="Recibo de sueldo"
+                                className="w-full rounded-xl border border-ink-200"
+                                style={{ height: '560px', border: 'none' }}
+                            />
+                        )}
+
                         {/* Historial de auditoría */}
                         {selectedRecibo?.audits?.length > 0 && (
                             <div>
-                                <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-2">
-                                    Historial de auditoría
-                                </p>
-                                <div className="space-y-2">
+                                <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-2">Auditoría</p>
+                                <div className="space-y-1.5">
                                     {selectedRecibo.audits.map((a) => (
-                                        <div key={a.id} className="flex items-start gap-3 bg-ink-50 border border-ink-100 rounded-xl px-3.5 py-2.5 text-xs">
-                                            <div className="mt-0.5 w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <span className="font-semibold text-ink-800 capitalize">
-                                                    {a.event.replace(/_/g, ' ')}
-                                                </span>
-                                                {a.user_name && (
-                                                    <span className="text-ink-500"> · {a.user_name}</span>
-                                                )}
-                                                <span className="text-ink-400 ml-1">— {a.occurred_at}</span>
-                                                {a.batch_id && (
-                                                    <p className="text-[10px] text-ink-400 font-mono mt-0.5 truncate">
-                                                        Lote: {a.batch_id}
-                                                    </p>
-                                                )}
-                                            </div>
+                                        <div key={a.id} className="flex items-start gap-3 text-xs text-ink-700 border-b border-ink-100 pb-1.5 last:border-0">
+                                            <span className="font-semibold capitalize">{a.event.replace(/_/g, ' ')}</span>
+                                            {a.user_name && <span className="text-ink-500">· {a.user_name}</span>}
+                                            <span className="text-ink-400 ml-auto">{a.occurred_at}</span>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Visor de PDF embebido — solo para recibos importados externamente */}
-                        {showPdfViewer && selectedRecibo?.file_url && (
-                            <div className="rounded-2xl overflow-hidden border border-ink-200 shadow-sm">
-                                <div className="flex items-center justify-between px-4 py-2 bg-ink-50 border-b border-ink-200">
-                                    <span className="text-xs font-semibold text-ink-600 flex items-center gap-1.5">
-                                        <FileText className="w-3.5 h-3.5" />
-                                        PDF importado
-                                    </span>
-                                    <a
-                                        href={selectedRecibo.file_url}
-                                        download
-                                        className="text-xs text-brand-700 hover:text-brand-900 font-semibold flex items-center gap-1"
-                                    >
-                                        ↓ Descargar
-                                    </a>
-                                </div>
-                                <iframe
-                                    src={selectedRecibo.file_url}
-                                    title="Recibo de sueldo"
-                                    className="w-full"
-                                    style={{ height: '520px', border: 'none' }}
-                                />
                             </div>
                         )}
                     </div>

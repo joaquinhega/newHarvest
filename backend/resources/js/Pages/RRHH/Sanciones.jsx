@@ -646,57 +646,42 @@ export default function Sanciones({
             >
                 {selectedSanction && (
                     <div className="space-y-4 text-sm">
-                        <div className="bg-white border border-ink-300 rounded-2xl p-6 font-mono text-[11px] leading-relaxed shadow-sm text-ink-950">
-                            <div className="flex justify-between items-start border-b border-ink-200 pb-3 mb-3">
-                                <div>
-                                    <p className="font-bold text-sm font-display tracking-tight text-brand-700">NEW HARVEST S.A.</p>
-                                    <p className="text-[10px] text-ink-500">Av. España 1248, Mendoza · CUIT: 30-71129168-3</p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="font-bold text-xs uppercase bg-ink-100 px-2 py-0.5 rounded">
-                                        Acta N° {selectedSanction.sanction_number}
-                                    </span>
-                                    <p className="text-[10px] text-ink-500 mt-1">Fecha: {selectedSanction.fecha_formateada}</p>
-                                </div>
-                            </div>
+                        <table className="w-full text-sm border-collapse">
+                            <tbody>
+                                {[
+                                    ['Acta N°', selectedSanction.sanction_number || '—'],
+                                    ['Fecha', selectedSanction.fecha_formateada],
+                                    ['Empleado', selectedSanction.nombre_completo],
+                                    ['Legajo', `#${selectedSanction.legajo}`],
+                                    ['CUIL', selectedSanction.cuil],
+                                    ['Puesto', selectedSanction.puesto],
+                                    ['Medida', `${selectedSanction.type.charAt(0).toUpperCase() + selectedSanction.type.slice(1)}${selectedSanction.type === 'suspension' ? ` (${selectedSanction.days_count} días)` : ''}`],
+                                    ['Estado', selectedSanction.status_label || selectedSanction.status],
+                                    ['Firma empleado', selectedSanction.is_signed ? `✓ Confirmado${selectedSanction.read_at ? ` — ${selectedSanction.read_at}` : ''}` : 'Pendiente'],
+                                ].map(([label, value]) => (
+                                    <tr key={label} className="border-b border-ink-100 last:border-0">
+                                        <td className="py-2 pr-4 text-xs font-semibold text-ink-500 uppercase tracking-wider w-32 align-top">{label}</td>
+                                        <td className="py-2 text-ink-950 font-medium">{value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
 
-                            <div className="space-y-1.5 mb-4">
-                                <p><span className="text-ink-500 font-semibold">EMPLEADO:</span> {selectedSanction.nombre_completo.toUpperCase()}</p>
-                                <p><span className="text-ink-500 font-semibold">LEGAJO:</span> #{selectedSanction.legajo} &nbsp;&nbsp; <span className="text-ink-500 font-semibold">CUIL:</span> {selectedSanction.cuil}</p>
-                                <p><span className="text-ink-500 font-semibold">PUESTO / FUNCIÓN:</span> {selectedSanction.puesto.toUpperCase()}</p>
-                                <p><span className="text-ink-500 font-semibold">MEDIDA APLICADA:</span> <strong className="text-brand-700">{selectedSanction.type.toUpperCase()}</strong> {selectedSanction.type === 'suspension' && `(${selectedSanction.days_count} DÍAS)`}</p>
-                            </div>
-
-                            <div className="border-t border-b border-ink-200 py-3 my-3">
-                                <p className="text-ink-500 font-semibold mb-1">MOTIVO / CIRCUNSTANCIAS DE LA FALTA:</p>
-                                <p className="text-ink-950 font-sans text-xs whitespace-pre-wrap leading-normal bg-ink-50 p-3 rounded-lg border border-ink-100">
-                                    {selectedSanction.reason}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-8 pt-8 mt-6 border-t border-dashed border-ink-300 text-center">
-                                <div>
-                                    <div className="border-b border-ink-400 mb-1.5 h-6 flex items-end justify-center">
-                                        {selectedSanction.is_signed && (
-                                            <span className="text-[10px] text-verify-700 font-sans font-bold">
-                                                ✓ Confirmado por {selectedSanction.nombre_completo}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-[9px] text-ink-500 uppercase font-semibold">Firma del Colaborador</p>
-                                    <p className="text-[8px] text-ink-400">{selectedSanction.read_at ? `Constancia: ${selectedSanction.read_at}` : 'Pendiente de confirmación'}</p>
-                                </div>
-                                <div>
-                                    <div className="border-b border-ink-400 mb-1.5 h-6 flex items-end justify-center">
-                                        <span className="text-[10px] text-brand-700 font-sans font-bold">
-                                            Recursos Humanos
-                                        </span>
-                                    </div>
-                                    <p className="text-[9px] text-ink-500 uppercase font-semibold">Por New Harvest S.A.</p>
-                                    <p className="text-[8px] text-ink-400">Emisión digital autorizada</p>
-                                </div>
-                            </div>
+                        <div>
+                            <p className="text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1.5">Motivo</p>
+                            <p className="text-sm text-ink-800 whitespace-pre-wrap leading-relaxed bg-ink-50 rounded-xl p-3 border border-ink-100">
+                                {selectedSanction.reason}
+                            </p>
                         </div>
+
+                        {selectedSanction.file_path && (
+                            <iframe
+                                src={`/storage/${selectedSanction.file_path}`}
+                                title="Acta de sanción"
+                                className="w-full rounded-xl border border-ink-200"
+                                style={{ height: '520px', border: 'none' }}
+                            />
+                        )}
                     </div>
                 )}
             </Modal>

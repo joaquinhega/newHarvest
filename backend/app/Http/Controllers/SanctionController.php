@@ -72,6 +72,14 @@ class SanctionController extends Controller
                     'signed_at' => $sanc->signed_at ? $sanc->signed_at->format('d/m/Y H:i') : null,
                     'is_signed' => !empty($sanc->signed_at) || $sanc->status === 'firmado' || $sanc->status === 'leido',
                     'signature_url' => $sanc->signature_path ? asset('storage/' . $sanc->signature_path) : null,
+                    'status_label' => match($sanc->status) {
+                        'pendiente'  => 'Pendiente',
+                        'leido'      => 'Leído',
+                        'firmado'    => 'Firmado',
+                        'archivado'  => 'Archivado',
+                        default      => ucfirst($sanc->status ?: 'pendiente'),
+                    },
+                    'file_path' => $sanc->file_path ?: null,
                 ];
             });
 
