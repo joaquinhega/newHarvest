@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class SalaryReceipt extends Model
 {
@@ -60,11 +59,19 @@ class SalaryReceipt extends Model
             $userId = $user?->id_usuario;
             $userName = $user ? trim("{$user->first_name} {$user->last_name}") : null;
 
-            // El mismo usuario + instante de firma identifica el lote completo,
-            // ya que signBatch() aplica el mismo timestamp a todos los recibos.
-            $batchId = $userId
-                ? (string) Str::uuid($userId . '|' . $occurredAt->format('Y-m-d H:i:s.u'))
-                : null;
+            // signBatch() aplica el mismo instante a todos los recibos del lote.
+            // A partir de usuario + instante obtenemos un identificador estable
+            // para relacionar todas las auditorías pertenecientes al mismo lote.
+            $batchSeed = ($userId ?? 'system') . '|' . $occurredAt->format('Y-m-d H:i:s.u');
+            $batchHash = md5($batchSeed);
+            $batchId = sprintf(
+                '%s-%s-5%s-%s-%s',
+                substr($batchHash, 0, 8),
+                substr($batchHash, 8, 4),
+                substr($batchHash, 12, 3),
+                substr($batchHash, 15, 3),
+                substr($batchHash, 18, 12)
+            );
 
             $fileHash = null;
             if ($receipt->file_path && Storage::disk('public')->exists($receipt->file_path)) {
