@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SalaryReceipt extends Model
 {
@@ -40,6 +43,50 @@ class SalaryReceipt extends Model
         'legal_accepted' => 'boolean',
         'borrado' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::updated(function (self $receipt) {
+            if (
+                ! $receipt->wasChanged('employer_signed_at') ||
+                empty($receipt->employer_signed_at) ||
+                $receipt->status !== 'firmado_empresa'
+            ) {
+                return;
+            }
+
+            $user = Auth::user();
+            $occurredAt = $receipt->employer_signed_at;
+            $userId = $user?->id_usuario;
+            $userName = $user ? trim("{$user->first_name} {$user->last_name}") : null;
+
+            // El mismo usuario + instante de firma identifica el lote completo,
+            // ya que signBatch() aplica el mismo timestamp a todos los recibos.
+            $batchId = $userId
+                ? (string) Str::uuid($userId . '|' . $occurredAt->format('Y-m-d H:i:s.u'))
+                : null;
+
+            $fileHash = null;
+            if ($receipt->file_path && Storage::disk('public')->exists($receipt->file_path)) {
+                $fileHash = hash_file('sha256', Storage::disk('public')->path($receipt->file_path));
+            }
+
+            SalaryReceiptAudit::create([
+                'salary_receipt_id' => $receipt->id,
+                'batch_id' => $batchId,
+                'user_id' => $userId,
+                'user_name' => $userName,
+                'event' => 'firma_empresa',
+                'file_hash' => $fileHash,
+                'metadata' => [
+                    'modo' => config('newharvest.firma_modo', 'simulado'),
+                    'status_anterior' => $receipt->getOriginal('status'),
+                    'status_nuevo' => $receipt->status,
+                ],
+                'occurred_at' => $occurredAt,
+            ]);
+        });
+    }
 
     public function employee(): BelongsTo
     {
