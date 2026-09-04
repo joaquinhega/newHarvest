@@ -67,6 +67,7 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
 
         // Sanciones y Recibos
     Route::post('/recibos/importar', [SalaryReceiptController::class, 'import'])->name('recibos.import');
+    Route::post('/recibos/firmar-lote', [SalaryReceiptController::class, 'signBatch'])->name('recibos.signBatch');
     Route::get('/recibos/export/excel', [SalaryReceiptController::class, 'exportExcel'])->name('recibos.export.excel');
     Route::get('/recibos', [SalaryReceiptController::class, 'index'])->name('recibos');
     Route::post('/recibos', [SalaryReceiptController::class, 'store'])->name('recibos.store');

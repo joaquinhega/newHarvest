@@ -42,6 +42,8 @@ export default function Recibos({
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [showPdfViewer, setShowPdfViewer] = useState(false);
+    const [isSignBatchOpen, setIsSignBatchOpen] = useState(false);
+    const [isSigning, setIsSigning] = useState(false);
 
     // Formulario de Importación de PDF externo
     const importForm = useForm({
@@ -335,6 +337,30 @@ export default function Recibos({
                         </select>
                     </div>
                 </div>
+
+                {/* Barra de acciones masivas — visible solo con selección activa */}
+                {selectedIds.length > 0 && (
+                    <div className="flex items-center justify-between bg-brand-50 border border-brand-200 rounded-2xl px-4 py-3">
+                        <span className="text-sm font-semibold text-brand-800">
+                            {selectedIds.length} {selectedIds.length === 1 ? 'recibo seleccionado' : 'recibos seleccionados'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedIds([])}
+                                className="text-xs text-ink-500 hover:text-ink-800 font-medium px-3 py-1.5 rounded-xl hover:bg-ink-100 transition-colors"
+                            >
+                                Cancelar selección
+                            </button>
+                            <Button
+                                onClick={() => setIsSignBatchOpen(true)}
+                            >
+                                <ShieldCheck className="w-4 h-4" />
+                                Firmar lote ({selectedIds.length})
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tabla de Registros */}
                 <Table
@@ -794,6 +820,76 @@ export default function Recibos({
                         )}
                     </div>
                 )}
+            </Modal>
+
+            {/* MODAL: CONFIRMACIÓN DE FIRMA POR LOTE */}
+            <Modal
+                isOpen={isSignBatchOpen}
+                onClose={() => !isSigning && setIsSignBatchOpen(false)}
+                title="Firmar lote de recibos"
+                subtitle="Revisá el detalle antes de confirmar"
+                maxWidth="sm"
+                footer={
+                    <div className="flex items-center justify-end gap-2 w-full">
+                        <Button
+                            variant="ghost"
+                            disabled={isSigning}
+                            onClick={() => setIsSignBatchOpen(false)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            disabled={isSigning}
+                            onClick={() => {
+                                setIsSigning(true);
+                                router.post('/rrhh/recibos/firmar-lote', { ids: selectedIds }, {
+                                    onSuccess: () => {
+                                        setIsSignBatchOpen(false);
+                                        setSelectedIds([]);
+                                        setIsSigning(false);
+                                    },
+                                    onError: () => setIsSigning(false),
+                                });
+                            }}
+                        >
+                            <ShieldCheck className="w-4 h-4" />
+                            {isSigning ? 'Firmando...' : 'Confirmar firma'}
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    {/* Resumen del lote */}
+                    <div className="bg-brand-50 border border-brand-200 rounded-2xl p-4 space-y-1">
+                        <p className="text-sm font-bold text-brand-800">
+                            Vas a firmar {selectedIds.length} {selectedIds.length === 1 ? 'recibo' : 'recibos'}
+                        </p>
+                        <p className="text-xs text-brand-600">
+                            La firma quedará registrada con tu nombre y la fecha/hora actual.
+                        </p>
+                    </div>
+
+                    {/* Lista de recibos seleccionados */}
+                    <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                        {filteredRecibos
+                            .filter(r => selectedIds.includes(r.id))
+                            .map(r => (
+                                <div key={r.id} className="flex items-center justify-between px-3 py-2 bg-ink-50 rounded-xl text-xs">
+                                    <span className="font-semibold text-ink-800">{r.nombre}</span>
+                                    <span className="text-ink-500 font-mono">{r.period}</span>
+                                </div>
+                            ))
+                        }
+                    </div>
+
+                    {/* Aviso modo simulado */}
+                    <div className="flex items-start gap-2 bg-pending-50 border border-pending-200 rounded-xl p-3">
+                        <span className="text-pending-600 mt-0.5">⚠</span>
+                        <p className="text-xs text-pending-700 leading-relaxed">
+                            <strong>Modo simulado activo.</strong> La firma se registra en la base de datos pero aún no se estampa criptográficamente en el PDF. Esto se habilita en producción con el token USB de la empresa.
+                        </p>
+                    </div>
+                </div>
             </Modal>
 
             {/* MODAL: IMPORTAR PDF EXTERNO */}

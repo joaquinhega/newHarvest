@@ -142,6 +142,64 @@ class SalaryReceiptController extends Controller
     }
 
     /**
+     * Firma de empresa por lote — Lote 4.
+     *
+     * Recibe un array de IDs de recibos, verifica que todos sean válidos
+     * y aplica la firma de la empresa sobre cada uno dentro de una transacción.
+     *
+     * MODO SIMULADO (desarrollo): mientras no haya token/certificado USB real,
+     * se guarda únicamente employer_signed_at y el nombre del firmante.
+     * En producción (Lote 9) este método se extiende para disparar la firma
+     * criptográfica real sobre el PDF — el flujo de confirmación y los estados
+     * quedan exactamente igual.
+     *
+     * El flag NEWHARVEST_FIRMA_MODO=simulado|real en .env controla el modo.
+     */
+    public function signBatch(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'   => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:salary_receipts,id'],
+        ]);
+
+        $user = $request->user();
+        $signerName = trim("{$user->first_name} {$user->last_name}");
+        $now = now();
+        $modo = config('newharvest.firma_modo', 'simulado');
+
+        $recibos = SalaryReceipt::whereIn('id', $validated['ids'])
+            ->where('borrado', false)
+            ->whereNotIn('status', ['firmado_empresa', 'archivado'])
+            ->get();
+
+        if ($recibos->isEmpty()) {
+            return redirect()->back()->withErrors([
+                'batch' => 'No hay recibos válidos para firmar en la selección.',
+            ]);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($recibos, $signerName, $now, $modo) {
+            foreach ($recibos as $receipt) {
+                $receipt->update([
+                    'employer_signed_at'      => $now,
+                    'employer_signature_path' => $modo === 'simulado'
+                        ? 'simulado'   // En Lote 9 se reemplaza por la ruta real del PDF firmado
+                        : null,        // placeholder hasta integrar el token USB
+                    'status' => 'firmado_empresa',
+                ]);
+            }
+        });
+
+        $count = $recibos->count();
+        $modoLabel = $modo === 'simulado' ? ' (modo simulado)' : '';
+
+        return redirect()->back()->with(
+            'message',
+            "✓ {$count} " . ($count === 1 ? 'recibo firmado' : 'recibos firmados') . " por {$signerName}{$modoLabel}."
+        );
+    }
+
+    /**
      * Alta manual de un recibo individual.
      */
     public function store(Request $request)
