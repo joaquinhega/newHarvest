@@ -768,7 +768,7 @@ export default function Recibos({
                         <Button
                             disabled={importForm.processing || !importForm.data.employee_id || !importForm.data.period || !importForm.data.pdf}
                             onClick={() => {
-                                importForm.post(route('recibos.import'), {
+                                importForm.post('/rrhh/recibos/importar', {
                                     forceFormData: true,
                                     onSuccess: () => {
                                         setIsImportOpen(false);
