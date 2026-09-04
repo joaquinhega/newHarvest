@@ -51,6 +51,11 @@ class SalaryReceipt extends Model
         return $this->hasMany(SalaryReceiptConcept::class)->orderBy('sort_order');
     }
 
+    public function audits(): HasMany
+    {
+        return $this->hasMany(SalaryReceiptAudit::class, 'salary_receipt_id')->orderByDesc('occurred_at');
+    }
+
     /**
      * Recalcula gross_amount, non_remunerative_amount, deductions_amount y net_amount
      * a partir de los conceptos cargados. Se usa cada vez que se guardan conceptos,
