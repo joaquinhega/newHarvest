@@ -14,14 +14,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Renombrar columna path → logo_path en companies
-        Schema::table('companies', function (Blueprint $table) {
-            $table->renameColumn('path', 'logo_path');
-        });
+        // 1. Renombrar path → logo_path de forma compatible con MariaDB < 10.5:
+        //    agregar la columna nueva, copiar los datos, eliminar la vieja.
+        if (Schema::hasColumn('companies', 'path') && ! Schema::hasColumn('companies', 'logo_path')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->string('logo_path', 255)->nullable()->after('name');
+            });
+            DB::statement("UPDATE `companies` SET `logo_path` = `path`");
+            Schema::table('companies', function (Blueprint $table) {
+                $table->dropColumn('path');
+            });
+        }
 
         // 2. Corregir status vacío en leave_requests
-        // Los registros con approved_by_user_id y action_at seteados
-        // fueron procesados — el '' es un bug del seed, no un estado real.
         DB::statement("
             UPDATE leave_requests
             SET status = 'aprobada'
@@ -31,10 +36,14 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
-            $table->renameColumn('logo_path', 'path');
-        });
-
-        // No revertimos el fix de datos — '' no es un estado válido del ENUM
+        if (Schema::hasColumn('companies', 'logo_path') && ! Schema::hasColumn('companies', 'path')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->string('path', 255)->nullable()->after('name');
+            });
+            DB::statement("UPDATE `companies` SET `path` = `logo_path`");
+            Schema::table('companies', function (Blueprint $table) {
+                $table->dropColumn('logo_path');
+            });
+        }
     }
 };
