@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,13 +18,15 @@ return new class extends Migration
      *
      * `logo_path` (legacy, columna `path` original) se conserva por ahora
      * para no romper referencias existentes del sistema PHP legacy.
+     *
+     * Nota: longBlob() no existe en versiones antiguas del Schema Builder
+     * de Laravel, se usa DB::statement raw para máxima compatibilidad.
      */
     public function up(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
-            $table->longBlob('logo_blob')->nullable()->after('logo_path');
-            $table->string('logo_mime', 100)->nullable()->after('logo_blob');
-        });
+        // LONGBLOB: hasta 4 GB, suficiente para cualquier logo de empresa.
+        DB::statement("ALTER TABLE `companies` ADD COLUMN `logo_blob` LONGBLOB NULL AFTER `logo_path`");
+        DB::statement("ALTER TABLE `companies` ADD COLUMN `logo_mime` VARCHAR(100) NULL AFTER `logo_blob`");
     }
 
     public function down(): void
