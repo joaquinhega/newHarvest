@@ -46,6 +46,7 @@ class SalaryReceiptController extends Controller
         }
 
         $recibos = $query->orderByDesc('id')
+            ->with(['audits.user'])
             ->get()
             ->map(function ($rec) {
                 $emp = $rec->employee;
@@ -74,6 +75,14 @@ class SalaryReceiptController extends Controller
                     'employee_signature_url' => $rec->employee_signature_path ? asset('storage/' . $rec->employee_signature_path) : null,
                     'legal_accepted' => (bool) $rec->legal_accepted,
                     'created_at' => $rec->created_at ? $rec->created_at->format('d/m/Y') : null,
+                    'audits' => $rec->audits->map(fn ($a) => [
+                        'id'         => $a->id,
+                        'event'      => $a->event,
+                        'user_name'  => $a->user_name,
+                        'batch_id'   => $a->batch_id,
+                        'occurred_at'=> $a->occurred_at?->format('d/m/Y H:i'),
+                        'metadata'   => $a->metadata,
+                    ])->values(),
                 ];
             });
 

@@ -794,6 +794,36 @@ export default function Recibos({
                                 </div>
                             </div>
                         </div>
+                        {/* Historial de auditoría */}
+                        {selectedRecibo?.audits?.length > 0 && (
+                            <div>
+                                <p className="text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-2">
+                                    Historial de auditoría
+                                </p>
+                                <div className="space-y-2">
+                                    {selectedRecibo.audits.map((a) => (
+                                        <div key={a.id} className="flex items-start gap-3 bg-ink-50 border border-ink-100 rounded-xl px-3.5 py-2.5 text-xs">
+                                            <div className="mt-0.5 w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <span className="font-semibold text-ink-800 capitalize">
+                                                    {a.event.replace(/_/g, ' ')}
+                                                </span>
+                                                {a.user_name && (
+                                                    <span className="text-ink-500"> · {a.user_name}</span>
+                                                )}
+                                                <span className="text-ink-400 ml-1">— {a.occurred_at}</span>
+                                                {a.batch_id && (
+                                                    <p className="text-[10px] text-ink-400 font-mono mt-0.5 truncate">
+                                                        Lote: {a.batch_id}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Visor de PDF embebido — solo para recibos importados externamente */}
                         {showPdfViewer && selectedRecibo?.file_url && (
                             <div className="rounded-2xl overflow-hidden border border-ink-200 shadow-sm">
