@@ -674,13 +674,17 @@ export default function Sanciones({
                             </p>
                         </div>
 
-                        {selectedSanction.file_path && (
+                        {selectedSanction.file_url ? (
                             <iframe
-                                src={`/storage/${selectedSanction.file_path}`}
+                                src={selectedSanction.file_url}
                                 title="Acta de sanción"
                                 className="w-full rounded-xl border border-ink-200"
                                 style={{ height: '520px', border: 'none' }}
                             />
+                        ) : (
+                            <div className="text-xs text-ink-400 bg-ink-50 rounded-xl border border-ink-100 px-4 py-3">
+                                Sin acta PDF adjunta. El PDF se adjunta al cargar o editar la sanción.
+                            </div>
                         )}
                     </div>
                 )}

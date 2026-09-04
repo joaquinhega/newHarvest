@@ -9,6 +9,7 @@ export default function Modal({
     subtitle,
     children,
     footer,
+    headerActions,
     maxWidth = 'md',
 }) {
     useEffect(() => {
@@ -58,13 +59,16 @@ export default function Modal({
                         {title && <h3 className="font-display font-bold text-lg text-ink-950">{title}</h3>}
                         {subtitle && <p className="text-xs text-ink-500 mt-0.5">{subtitle}</p>}
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:text-ink-950 hover:bg-ink-100 transition-colors shrink-0"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                        {headerActions}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:text-ink-950 hover:bg-ink-100 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Body */}

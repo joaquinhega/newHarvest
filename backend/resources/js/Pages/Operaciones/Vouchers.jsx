@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { router, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Button from '@/Components/UI/Button';
@@ -17,7 +17,8 @@ import {
     User, 
     Building2, 
     PenTool,
-    RotateCcw
+    RotateCcw,
+    MoreVertical
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -29,6 +30,8 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [voucherToApprove, setVoucherToApprove] = useState(null);
+    const [isDetailMenuOpen, setIsDetailMenuOpen] = useState(false);
+    const detailMenuRef = useRef(null);
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
 
@@ -307,57 +310,49 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             {/* Modal Detalle */}
             <Modal
                 isOpen={isDetailOpen}
-                onClose={() => { setIsDetailOpen(false); setSelectedVoucher(null); }}
+                onClose={() => { setIsDetailOpen(false); setSelectedVoucher(null); setIsDetailMenuOpen(false); }}
                 title={`Voucher #${selectedVoucher?.remito_code}`}
                 subtitle={selectedVoucher?.fecha_formateada}
                 maxWidth="lg"
-                footer={
-                    <div className="w-full flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" onClick={() => { setIsDetailOpen(false); setSelectedVoucher(null); }}>
-                                Cerrar
-                            </Button>
-                            {selectedVoucher?.company_id && (
-                                <Button
-                                    variant="outline"
-                                    onClick={() => router.get('/empresas', { highlight: selectedVoucher.company_id })}
-                                    className="gap-1.5"
+                headerActions={
+                    <div className="relative" ref={detailMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setIsDetailMenuOpen(v => !v)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:text-ink-950 hover:bg-ink-100 transition-colors"
+                        >
+                            <MoreVertical className="w-4 h-4" />
+                        </button>
+                        {isDetailMenuOpen && (
+                            <div className="absolute right-0 top-8 z-50 bg-white border border-ink-100 rounded-xl shadow-lg py-1 min-w-[160px]">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsDetailMenuOpen(false); setIsDetailOpen(false); handleOpenEdit(selectedVoucher); }}
+                                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-ink-800 hover:bg-ink-50 transition-colors"
                                 >
-                                    <Building2 className="w-4 h-4" />
-                                    Ir a empresa
-                                </Button>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => window.open(`/vouchers/${selectedVoucher?.id}/pdf`, '_blank')}
-                                className="gap-1.5"
-                            >
-                                <FileDown className="w-4 h-4" />
-                                PDF
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => { setIsDetailOpen(false); handleOpenEdit(selectedVoucher); }}
-                                className="gap-1.5"
-                            >
-                                <Pencil className="w-4 h-4" />
-                                Editar
-                            </Button>
-                            {selectedVoucher?.status === 'pendiente' ? (
-                                <Button variant="verify" onClick={() => handleApprove(selectedVoucher)} className="gap-1.5">
-                                    <Check className="w-4 h-4" />
-                                    Aprobar
-                                </Button>
-                            ) : (
-                                <Button variant="danger" onClick={() => handleDisapprove(selectedVoucher)} className="gap-1.5">
-                                    <RotateCcw className="w-4 h-4" />
-                                    Desaprobar
-                                </Button>
-                            )}
-                        </div>
+                                    <Pencil className="w-3.5 h-3.5 text-ink-400" /> Editar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsDetailMenuOpen(false); window.open(`/vouchers/${selectedVoucher?.id}/pdf`, '_blank'); }}
+                                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-ink-800 hover:bg-ink-50 transition-colors"
+                                >
+                                    <FileDown className="w-3.5 h-3.5 text-ink-400" /> Descargar PDF
+                                </button>
+                            </div>
+                        )}
                     </div>
+                }
+                footer={
+                    selectedVoucher?.status === 'pendiente' ? (
+                        <Button variant="verify" onClick={() => handleApprove(selectedVoucher)} className="gap-1.5">
+                            <Check className="w-4 h-4" /> Aprobar voucher
+                        </Button>
+                    ) : (
+                        <Button variant="danger" onClick={() => handleDisapprove(selectedVoucher)} className="gap-1.5">
+                            <RotateCcw className="w-4 h-4" /> Desaprobar
+                        </Button>
+                    )
                 }
             >
                 {selectedVoucher && (
@@ -378,7 +373,10 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                                 {[
                                     ['Remito', selectedVoucher.remito_code],
                                     ['Fecha', selectedVoucher.fecha_formateada],
-                                    ['Empresa', selectedVoucher.empresa],
+                                    ['Empresa', selectedVoucher.company_id
+                                        ? <button type="button" onClick={() => { setIsDetailOpen(false); router.get('/empresas', { highlight: selectedVoucher.company_id }); }} className="text-brand-700 hover:underline font-medium flex items-center gap-1">{selectedVoucher.empresa} <Building2 className="w-3 h-3" /></button>
+                                        : selectedVoucher.empresa
+                                    ],
                                     ['Origen', `${selectedVoucher.origen}${selectedVoucher.hora_origen && selectedVoucher.hora_origen !== '--:--' ? ` · ${selectedVoucher.hora_origen} hs` : ''}`],
                                     ['Destino', `${selectedVoucher.destino}${selectedVoucher.hora_destino && selectedVoucher.hora_destino !== '--:--' ? ` · ${selectedVoucher.hora_destino} hs` : ''}`],
                                     ['Importe', `$ ${selectedVoucher.monto.toLocaleString('es-AR')}`],

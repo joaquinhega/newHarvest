@@ -80,6 +80,7 @@ class SanctionController extends Controller
                         default      => ucfirst($sanc->status ?: 'pendiente'),
                     },
                     'file_path' => $sanc->file_path ?: null,
+                    'file_url'  => $sanc->file_path ? asset('storage/' . $sanc->file_path) : null,
                 ];
             });
 
