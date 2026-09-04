@@ -25,6 +25,26 @@ function getCurrentPeriod() {
     return buildPeriodLabel(ALL_MONTHS[now.getMonth()], now.getFullYear());
 }
 
+// Genera la secuencia completa de períodos entre fromIdx y toIdx (inclusive), sin saltos
+function generateAllPeriods(fromYear, fromMonth, toYear, toMonth) {
+    const result = [];
+    let y = fromYear, m = fromMonth;
+    while (y < toYear || (y === toYear && m <= toMonth)) {
+        result.push(buildPeriodLabel(ALL_MONTHS[m], y));
+        m++;
+        if (m > 11) { m = 0; y++; }
+    }
+    return result.reverse(); // más reciente primero
+}
+
+// Opciones de año para el select (desde 2024 hasta año actual + 1)
+function getYearOptions() {
+    const current = new Date().getFullYear();
+    const years = [];
+    for (let y = current + 1; y >= 2024; y--) years.push(y);
+    return years;
+}
+
 const STATUS_COLORS = {
     generado:         'bg-ink-100 text-ink-700',
     notificado:       'bg-pending-100 text-pending-700',
@@ -55,6 +75,7 @@ export default function Recibos({
 
     // Navegación por período (línea de tiempo)
     const [activePeriod, setActivePeriod] = useState(filters.period || getCurrentPeriod());
+    const [showAllPeriods, setShowAllPeriods] = useState(false);
 
     // Upload: múltiples PDFs con metadatos editables antes de confirmar
     const [pendingFiles, setPendingFiles] = useState([]); // [{ file, employee_id, period, name }]
@@ -70,15 +91,31 @@ export default function Recibos({
         firmado_empresa: 1, firmado_empleado: 4, archivado: 5,
     }[status] ?? 0);
 
-    // Períodos disponibles para la línea de tiempo
+    // Secuencia completa de períodos sin saltos (desde el más antiguo registrado hasta hoy)
     const periods = useMemo(() => {
-        const set = new Set(recibos.map(r => r.period));
-        if (!set.has(activePeriod)) set.add(activePeriod);
-        return [...set].sort((a, b) => {
-            const parse = s => { const [m, y] = s.split(' '); return parseInt(y)*12 + ALL_MONTHS.indexOf(m); };
-            return parse(b) - parse(a);
+        const now = new Date();
+        const toYear = now.getFullYear();
+        const toMonth = now.getMonth(); // 0-based
+
+        // Determinar el período más antiguo entre los recibos
+        let fromYear = toYear, fromMonth = toMonth;
+        recibos.forEach(r => {
+            const parts = r.period.split(' ');
+            const mIdx = ALL_MONTHS.indexOf(parts[0]);
+            const y = parseInt(parts[1]);
+            if (!isNaN(mIdx) && !isNaN(y)) {
+                const earlier = y < fromYear || (y === fromYear && mIdx < fromMonth);
+                if (earlier) { fromYear = y; fromMonth = mIdx; }
+            }
         });
-    }, [recibos, activePeriod]);
+        // Al menos mostrar los últimos 12 meses aunque no haya recibos
+        const twelveAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+        if (fromYear > twelveAgo.getFullYear() || (fromYear === twelveAgo.getFullYear() && fromMonth > twelveAgo.getMonth())) {
+            fromYear = twelveAgo.getFullYear();
+            fromMonth = twelveAgo.getMonth();
+        }
+        return generateAllPeriods(fromYear, fromMonth, toYear, toMonth);
+    }, [recibos]);
 
     const periodIdx = periods.indexOf(activePeriod);
 
@@ -91,7 +128,7 @@ export default function Recibos({
                 item.cuil.toLowerCase().includes(q) ||
                 item.period.toLowerCase().includes(q);
             const matchStatus = statusFilter === 'todos' || item.status === statusFilter;
-            const matchPeriod = item.period === activePeriod;
+            const matchPeriod = showAllPeriods || item.period === activePeriod;
             return matchSearch && matchStatus && matchPeriod;
         });
     }, [recibos, searchTerm, statusFilter, activePeriod]);
@@ -219,39 +256,80 @@ export default function Recibos({
 
                 {/* Línea de tiempo de períodos */}
                 <div className="bg-white rounded-2xl border border-ink-100 shadow-sm px-4 py-3 flex items-center gap-3">
+                    {/* Botón Todos */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAllPeriods(true)}
+                        className={cn(
+                            'px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition-colors',
+                            showAllPeriods
+                                ? 'bg-ink-950 text-white border-ink-950'
+                                : 'bg-white text-ink-700 border-ink-200 hover:border-ink-400'
+                        )}
+                    >
+                        Todos
+                    </button>
+
+                    <div className="w-px h-5 bg-ink-200 shrink-0" />
+
+                    {/* Flecha izquierda (período anterior = más antiguo, mayor índice) */}
                     <button
                         type="button"
                         disabled={periodIdx >= periods.length - 1}
-                        onClick={() => setActivePeriod(periods[periodIdx + 1])}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:bg-ink-100 disabled:opacity-30 transition-colors"
+                        onClick={() => { setActivePeriod(periods[periodIdx + 1]); setShowAllPeriods(false); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:bg-ink-100 disabled:opacity-30 transition-colors shrink-0"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                        {periods.slice(Math.max(0, periodIdx - 2), periodIdx + 3).map(p => (
+                    {/* 3 períodos visibles: anterior · activo (grande) · siguiente */}
+                    <div className="flex items-center gap-2 flex-1 justify-center">
+                        {/* Período anterior (más antiguo) */}
+                        {periodIdx < periods.length - 1 && (
                             <button
-                                key={p}
                                 type="button"
-                                onClick={() => setActivePeriod(p)}
-                                className={cn(
-                                    'px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors',
-                                    p === activePeriod
-                                        ? 'bg-brand-600 text-white'
-                                        : 'bg-ink-50 text-ink-600 hover:bg-ink-100'
-                                )}
+                                onClick={() => { setActivePeriod(periods[periodIdx + 1]); setShowAllPeriods(false); }}
+                                className="px-3 py-1 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
                             >
-                                {p}
-                                {p === getCurrentPeriod() && <span className="ml-1 text-[9px] opacity-70">actual</span>}
+                                {periods[periodIdx + 1]}
                             </button>
-                        ))}
+                        )}
+
+                        {/* Período activo */}
+                        <button
+                            type="button"
+                            onClick={() => setShowAllPeriods(false)}
+                            className={cn(
+                                'px-4 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors',
+                                !showAllPeriods
+                                    ? 'bg-ink-950 text-white'
+                                    : 'text-ink-500 hover:bg-ink-50'
+                            )}
+                        >
+                            {activePeriod}
+                            {activePeriod === getCurrentPeriod() && (
+                                <span className="ml-1.5 text-[9px] font-semibold opacity-60 align-middle">HOY</span>
+                            )}
+                        </button>
+
+                        {/* Período siguiente (más reciente) */}
+                        {periodIdx > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => { setActivePeriod(periods[periodIdx - 1]); setShowAllPeriods(false); }}
+                                className="px-3 py-1 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
+                            >
+                                {periods[periodIdx - 1]}
+                            </button>
+                        )}
                     </div>
 
+                    {/* Flecha derecha (período siguiente = más reciente, menor índice) */}
                     <button
                         type="button"
                         disabled={periodIdx <= 0}
-                        onClick={() => setActivePeriod(periods[periodIdx - 1])}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:bg-ink-100 disabled:opacity-30 transition-colors"
+                        onClick={() => { setActivePeriod(periods[periodIdx - 1]); setShowAllPeriods(false); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-500 hover:bg-ink-100 disabled:opacity-30 transition-colors shrink-0"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>
@@ -297,7 +375,7 @@ export default function Recibos({
                 )}
 
                 {/* Tabla */}
-                <Table headers={tableHeaders} isEmpty={filteredRecibos.length === 0} emptyMessage={`No hay recibos para ${activePeriod}. Subí los PDFs del contador.`}>
+                <Table headers={tableHeaders} isEmpty={filteredRecibos.length === 0} emptyMessage={showAllPeriods ? 'No hay recibos cargados.' : `No hay recibos para ${activePeriod}. Subí los PDFs del contador.`}>
                     {filteredRecibos.map(item => {
                         const isChecked = selectedIds.includes(item.id);
                         const canSign   = !item.employer_signed;
@@ -545,13 +623,28 @@ export default function Recibos({
                                                 <option key={emp.id} value={emp.id}>{emp.last_name}, {emp.first_name}</option>
                                             ))}
                                         </select>
-                                        <input
-                                            type="text"
-                                            value={pf.period}
-                                            onChange={e => updatePending(idx, 'period', e.target.value)}
-                                            placeholder="Período *"
+                                        <select
+                                            value={pf.period.split(' ')[0] || ''}
+                                            onChange={e => {
+                                                const year = pf.period.split(' ')[1] || new Date().getFullYear();
+                                                updatePending(idx, 'period', `${e.target.value} ${year}`);
+                                            }}
                                             className={cn('text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 w-28', !pf.period ? 'border-danger-300 bg-danger-50' : 'border-ink-200 bg-white')}
-                                        />
+                                        >
+                                            <option value="">Mes *</option>
+                                            {ALL_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
+                                        <select
+                                            value={pf.period.split(' ')[1] || ''}
+                                            onChange={e => {
+                                                const month = pf.period.split(' ')[0] || ALL_MONTHS[new Date().getMonth()];
+                                                updatePending(idx, 'period', `${month} ${e.target.value}`);
+                                            }}
+                                            className="text-xs border border-ink-200 bg-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 w-20"
+                                        >
+                                            <option value="">Año</option>
+                                            {getYearOptions().map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
                                         <button type="button" onClick={() => removePending(idx)} className="text-ink-400 hover:text-danger-600 transition-colors text-xs font-bold px-1">✕</button>
                                     </div>
                                 </div>
@@ -629,7 +722,33 @@ export default function Recibos({
                             ))}
                         </select>
                     </div>
-                    <Input label="Período" placeholder="Ej: Agosto 2026" value={reassignForm.data.period} onChange={e => reassignForm.setData('period', e.target.value)} />
+                    <div>
+                        <label className="block text-xs font-semibold text-ink-700 mb-1.5">Período</label>
+                        <div className="flex gap-2">
+                            <select
+                                value={reassignForm.data.period.split(' ')[0] || ''}
+                                onChange={e => {
+                                    const year = reassignForm.data.period.split(' ')[1] || new Date().getFullYear();
+                                    reassignForm.setData('period', `${e.target.value} ${year}`);
+                                }}
+                                className="flex-1 border border-ink-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
+                            >
+                                <option value="">Mes</option>
+                                {ALL_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                            <select
+                                value={reassignForm.data.period.split(' ')[1] || ''}
+                                onChange={e => {
+                                    const month = reassignForm.data.period.split(' ')[0] || ALL_MONTHS[new Date().getMonth()];
+                                    reassignForm.setData('period', `${month} ${e.target.value}`);
+                                }}
+                                className="w-24 border border-ink-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
+                            >
+                                <option value="">Año</option>
+                                {getYearOptions().map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </Modal>
         </AuthenticatedLayout>
