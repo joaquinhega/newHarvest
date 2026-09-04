@@ -74,8 +74,9 @@ export default function Recibos({
     const detailMenuRef = useRef(null);
 
     // Navegación por período (línea de tiempo)
-    const [activePeriod, setActivePeriod] = useState(filters.period || getCurrentPeriod());
-    const [showAllPeriods, setShowAllPeriods] = useState(!filters.period);
+    const initialPeriod = (filters.period && filters.period !== 'todos') ? filters.period : getCurrentPeriod();
+    const [activePeriod, setActivePeriod] = useState(initialPeriod);
+    const [showAllPeriods, setShowAllPeriods] = useState(!filters.period || filters.period === 'todos');
 
     // Upload: múltiples PDFs con metadatos editables antes de confirmar
     const [pendingFiles, setPendingFiles] = useState([]); // [{ file, employee_id, period, name }]
