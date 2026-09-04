@@ -111,6 +111,37 @@ class SalaryReceiptController extends Controller
     }
 
     /**
+     * Importar un PDF de recibo ya generado externamente (YAM u otro sistema).
+     * El archivo se guarda en storage/app/public/receipts/ y queda asociado
+     * al empleado y período indicados. No requiere conceptos — el documento
+     * ya viene armado y firmado por fuera.
+     */
+    public function import(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'period'      => ['required', 'string', 'max:50'],
+            'pdf'         => ['required', 'file', 'mimes:pdf', 'max:10240'], // máx 10 MB
+        ]);
+
+        $file = $request->file('pdf');
+        $path = $file->store('receipts', 'public');
+
+        $receipt = SalaryReceipt::create([
+            'employee_id'      => $validated['employee_id'],
+            'period'           => $validated['period'],
+            'gross_amount'     => 0,
+            'deductions_amount'=> 0,
+            'net_amount'       => 0,
+            'file_path'        => $path,
+            'status'           => 'generado',
+            'borrado'          => false,
+        ]);
+
+        return redirect()->back()->with('message', "Recibo #{$receipt->id} importado correctamente.");
+    }
+
+    /**
      * Alta manual de un recibo individual.
      */
     public function store(Request $request)

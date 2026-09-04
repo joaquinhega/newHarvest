@@ -40,6 +40,14 @@ export default function Recibos({
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isImportOpen, setIsImportOpen] = useState(false);
+
+    // Formulario de Importación de PDF externo
+    const importForm = useForm({
+        employee_id: '',
+        period: '',
+        pdf: null,
+    });
 
     // Formulario de Alta Individual
     const createForm = useForm({
@@ -221,6 +229,14 @@ export default function Recibos({
                     >
                         <FileSpreadsheet className="w-4 h-4 text-verify-700" />
                         Exportar Excel
+                    </Button>
+                    <Button
+                        onClick={() => setIsImportOpen(true)}
+                        variant="secondary"
+                        className="shadow-sm"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Importar PDF
                     </Button>
                     <Button
                         onClick={() => setIsCreateOpen(true)}
@@ -726,6 +742,124 @@ export default function Recibos({
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* MODAL: IMPORTAR PDF EXTERNO */}
+            <Modal
+                isOpen={isImportOpen}
+                onClose={() => {
+                    setIsImportOpen(false);
+                    importForm.reset();
+                }}
+                title="Importar recibo de sueldo"
+                subtitle="Subí un PDF ya generado externamente (YAM u otro sistema)"
+                maxWidth="sm"
+                footer={
+                    <div className="flex items-center justify-end gap-2 w-full">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setIsImportOpen(false);
+                                importForm.reset();
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            disabled={importForm.processing || !importForm.data.employee_id || !importForm.data.period || !importForm.data.pdf}
+                            onClick={() => {
+                                importForm.post(route('recibos.import'), {
+                                    forceFormData: true,
+                                    onSuccess: () => {
+                                        setIsImportOpen(false);
+                                        importForm.reset();
+                                    },
+                                });
+                            }}
+                        >
+                            <Upload className="w-4 h-4" />
+                            {importForm.processing ? 'Subiendo...' : 'Importar'}
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="space-y-4">
+                    {/* Selección de empleado */}
+                    <div>
+                        <label className="block text-xs font-semibold text-ink-700 mb-1">
+                            Empleado <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            className="w-full border border-ink-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            value={importForm.data.employee_id}
+                            onChange={e => importForm.setData('employee_id', e.target.value)}
+                        >
+                            <option value="">Seleccioná un empleado...</option>
+                            {employees.map(emp => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.last_name}, {emp.first_name} — Legajo {emp.id}
+                                </option>
+                            ))}
+                        </select>
+                        {importForm.errors.employee_id && (
+                            <p className="text-xs text-red-500 mt-1">{importForm.errors.employee_id}</p>
+                        )}
+                    </div>
+
+                    {/* Período */}
+                    <div>
+                        <label className="block text-xs font-semibold text-ink-700 mb-1">
+                            Período <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                            placeholder="Ej: Julio 2026"
+                            value={importForm.data.period}
+                            onChange={e => importForm.setData('period', e.target.value)}
+                        />
+                        {importForm.errors.period && (
+                            <p className="text-xs text-red-500 mt-1">{importForm.errors.period}</p>
+                        )}
+                    </div>
+
+                    {/* Archivo PDF */}
+                    <div>
+                        <label className="block text-xs font-semibold text-ink-700 mb-1">
+                            Archivo PDF <span className="text-red-500">*</span>
+                        </label>
+                        <div className="border-2 border-dashed border-ink-200 rounded-xl p-4 text-center hover:border-brand-400 transition-colors">
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                id="import-pdf-input"
+                                onChange={e => importForm.setData('pdf', e.target.files[0])}
+                            />
+                            <label
+                                htmlFor="import-pdf-input"
+                                className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                                <FileText className="w-8 h-8 text-ink-400" />
+                                {importForm.data.pdf ? (
+                                    <span className="text-sm font-semibold text-brand-700">
+                                        {importForm.data.pdf.name}
+                                    </span>
+                                ) : (
+                                    <span className="text-sm text-ink-500">
+                                        Hacé click para seleccionar el PDF
+                                    </span>
+                                )}
+                                <span className="text-xs text-ink-400">Máximo 10 MB</span>
+                            </label>
+                        </div>
+                        {importForm.errors.pdf && (
+                            <p className="text-xs text-red-500 mt-1">{importForm.errors.pdf}</p>
+                        )}
+                    </div>
+
+                    <p className="text-xs text-ink-400 leading-relaxed">
+                        El recibo quedará registrado como "Generado". Los montos quedan en cero — el documento PDF es la fuente de verdad en este caso.
+                    </p>
+                </div>
             </Modal>
         </AuthenticatedLayout>
     );

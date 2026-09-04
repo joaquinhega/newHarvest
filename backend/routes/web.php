@@ -66,6 +66,7 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
         Route::delete('/vacaciones/{id}', [LeaveRequestController::class, 'destroy'])->name('vacaciones.destroy');
 
         // Sanciones y Recibos
+    Route::post('/recibos/importar', [SalaryReceiptController::class, 'import'])->name('recibos.import');
     Route::get('/recibos/export/excel', [SalaryReceiptController::class, 'exportExcel'])->name('recibos.export.excel');
     Route::get('/recibos', [SalaryReceiptController::class, 'index'])->name('recibos');
     Route::post('/recibos', [SalaryReceiptController::class, 'store'])->name('recibos.store');
