@@ -209,56 +209,12 @@ class SalaryReceiptController extends Controller
     }
 
     /**
-     * Alta manual de un recibo individual.
+     * store eliminado — recibos solo se crean por importación de PDF externo.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'period' => ['required', 'string', 'max:50'],
-            'gross_amount' => ['required_without:concepts', 'nullable', 'numeric', 'min:0'],
-            'non_remunerative_amount' => ['nullable', 'numeric', 'min:0'],
-            'deductions_amount' => ['nullable', 'numeric', 'min:0'],
-            'net_amount' => ['required_without:concepts', 'nullable', 'numeric', 'min:0'],
-            'concepts' => ['nullable', 'array'],
-            'concepts.*.code' => ['nullable', 'string', 'max:10'],
-            'concepts.*.description' => ['required_with:concepts', 'string', 'max:150'],
-            'concepts.*.quantity' => ['nullable', 'numeric'],
-            'concepts.*.remunerative_amount' => ['nullable', 'numeric', 'min:0'],
-            'concepts.*.non_remunerative_amount' => ['nullable', 'numeric', 'min:0'],
-            'concepts.*.deduction_amount' => ['nullable', 'numeric', 'min:0'],
-        ]);
-
-        $concepts = $validated['concepts'] ?? null;
-        unset($validated['concepts']);
-
-        $validated['deductions_amount'] = $validated['deductions_amount'] ?? 0;
-        $validated['non_remunerative_amount'] = $validated['non_remunerative_amount'] ?? 0;
-        $validated['status'] = 'generado';
-        $validated['borrado'] = false;
-
-        $receipt = SalaryReceipt::create($validated);
-
-        if (! empty($concepts)) {
-            foreach (array_values($concepts) as $index => $concept) {
-                $receipt->concepts()->create([
-                    'code' => $concept['code'] ?? null,
-                    'description' => $concept['description'],
-                    'quantity' => $concept['quantity'] ?? null,
-                    'remunerative_amount' => $concept['remunerative_amount'] ?? 0,
-                    'non_remunerative_amount' => $concept['non_remunerative_amount'] ?? 0,
-                    'deduction_amount' => $concept['deduction_amount'] ?? 0,
-                    'sort_order' => $index,
-                ]);
-            }
-            $receipt->recalculateTotalsFromConcepts()->save();
-        }
-
-        return redirect()->back()->with('message', "Recibo #{$receipt->id} creado exitosamente.");
-    }
 
     /**
-     * Modificación de montos o período.
+     * Reasignación: corrige employee_id o period si se importó incorrectamente.
+     * No permite modificar montos — el PDF es la fuente de verdad.
      */
     public function update(Request $request, $id)
     {
@@ -266,15 +222,12 @@ class SalaryReceiptController extends Controller
 
         $validated = $request->validate([
             'employee_id' => ['required', 'exists:employees,id'],
-            'period' => ['required', 'string', 'max:50'],
-            'gross_amount' => ['required', 'numeric', 'min:0'],
-            'deductions_amount' => ['nullable', 'numeric', 'min:0'],
-            'net_amount' => ['required', 'numeric', 'min:0'],
+            'period'      => ['required', 'string', 'max:50'],
         ]);
 
         $receipt->update($validated);
 
-        return redirect()->back()->with('message', "Recibo #{$receipt->id} actualizado.");
+        return redirect()->back()->with('message', "Recibo #{$receipt->id} reasignado correctamente.");
     }
 
     /**

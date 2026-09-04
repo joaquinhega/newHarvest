@@ -12,7 +12,6 @@ use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\SanctionController;
 use App\Http\Controllers\SalaryReceiptController;
-use App\Http\Controllers\SalaryReceiptPdfController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -70,10 +69,8 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
     Route::post('/recibos/firmar-lote', [SalaryReceiptController::class, 'signBatch'])->name('recibos.signBatch');
     Route::get('/recibos/export/excel', [SalaryReceiptController::class, 'exportExcel'])->name('recibos.export.excel');
     Route::get('/recibos', [SalaryReceiptController::class, 'index'])->name('recibos');
-    Route::post('/recibos', [SalaryReceiptController::class, 'store'])->name('recibos.store');
     Route::put('/recibos/{id}', [SalaryReceiptController::class, 'update'])->name('recibos.update');
     Route::delete('/recibos/{id}', [SalaryReceiptController::class, 'destroy'])->name('recibos.destroy');
-    Route::get('/recibos/{id}/pdf', [SalaryReceiptPdfController::class, 'generate'])->name('recibos.pdf');
 
         // Sanciones
         Route::get('/sanciones/export/excel', [SanctionController::class, 'exportExcel'])->name('sanciones.export.excel');
