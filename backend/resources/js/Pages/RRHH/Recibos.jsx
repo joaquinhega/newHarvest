@@ -75,7 +75,7 @@ export default function Recibos({
 
     // Navegación por período (línea de tiempo)
     const [activePeriod, setActivePeriod] = useState(filters.period || getCurrentPeriod());
-    const [showAllPeriods, setShowAllPeriods] = useState(false);
+    const [showAllPeriods, setShowAllPeriods] = useState(!filters.period);
 
     // Upload: múltiples PDFs con metadatos editables antes de confirmar
     const [pendingFiles, setPendingFiles] = useState([]); // [{ file, employee_id, period, name }]
@@ -305,7 +305,7 @@ export default function Recibos({
                                 'px-4 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors shrink-0',
                                 !showAllPeriods
                                     ? 'bg-ink-950 text-white'
-                                    : 'text-ink-500 hover:bg-ink-50'
+                                    : 'text-ink-400 hover:text-ink-700 hover:bg-ink-50 font-medium'
                             )}
                         >
                             {activePeriod}
