@@ -256,12 +256,12 @@ export default function Recibos({
 
                 {/* Línea de tiempo de períodos */}
                 <div className="bg-white rounded-2xl border border-ink-100 shadow-sm px-4 py-3 flex items-center gap-3">
-                    {/* Botón Todos */}
+                    {/* Botón Todos — siempre visible */}
                     <button
                         type="button"
                         onClick={() => setShowAllPeriods(true)}
                         className={cn(
-                            'px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition-colors',
+                            'px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition-colors shrink-0',
                             showAllPeriods
                                 ? 'bg-ink-950 text-white border-ink-950'
                                 : 'bg-white text-ink-700 border-ink-200 hover:border-ink-400'
@@ -272,7 +272,7 @@ export default function Recibos({
 
                     <div className="w-px h-5 bg-ink-200 shrink-0" />
 
-                    {/* Flecha izquierda (período anterior = más antiguo, mayor índice) */}
+                    {/* Flecha izquierda → período anterior (más antiguo = mayor índice en el array) */}
                     <button
                         type="button"
                         disabled={periodIdx >= periods.length - 1}
@@ -282,25 +282,27 @@ export default function Recibos({
                         <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    {/* 3 períodos visibles: anterior · activo (grande) · siguiente */}
-                    <div className="flex items-center gap-2 flex-1 justify-center">
-                        {/* Período anterior (más antiguo) */}
-                        {periodIdx < periods.length - 1 && (
-                            <button
-                                type="button"
-                                onClick={() => { setActivePeriod(periods[periodIdx + 1]); setShowAllPeriods(false); }}
-                                className="px-3 py-1 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
-                            >
-                                {periods[periodIdx + 1]}
-                            </button>
-                        )}
+                    {/* Siempre 3 slots: anterior · activo · siguiente */}
+                    <div className="flex items-center gap-1 flex-1 justify-center">
+                        {/* Slot izquierdo: período anterior (más antiguo) */}
+                        <div className="flex-1 flex justify-end">
+                            {periodIdx < periods.length - 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setActivePeriod(periods[periodIdx + 1]); setShowAllPeriods(false); }}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
+                                >
+                                    {periods[periodIdx + 1]}
+                                </button>
+                            )}
+                        </div>
 
-                        {/* Período activo */}
+                        {/* Slot central: período activo — siempre visible */}
                         <button
                             type="button"
                             onClick={() => setShowAllPeriods(false)}
                             className={cn(
-                                'px-4 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors',
+                                'px-4 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-colors shrink-0',
                                 !showAllPeriods
                                     ? 'bg-ink-950 text-white'
                                     : 'text-ink-500 hover:bg-ink-50'
@@ -312,19 +314,21 @@ export default function Recibos({
                             )}
                         </button>
 
-                        {/* Período siguiente (más reciente) */}
-                        {periodIdx > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => { setActivePeriod(periods[periodIdx - 1]); setShowAllPeriods(false); }}
-                                className="px-3 py-1 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
-                            >
-                                {periods[periodIdx - 1]}
-                            </button>
-                        )}
+                        {/* Slot derecho: período siguiente (más reciente) — siempre ocupa espacio */}
+                        <div className="flex-1 flex justify-start">
+                            {periodIdx > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setActivePeriod(periods[periodIdx - 1]); setShowAllPeriods(false); }}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-ink-400 hover:text-ink-700 hover:bg-ink-50 transition-colors whitespace-nowrap"
+                                >
+                                    {periods[periodIdx - 1]}
+                                </button>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Flecha derecha (período siguiente = más reciente, menor índice) */}
+                    {/* Flecha derecha → período siguiente (más reciente = menor índice) */}
                     <button
                         type="button"
                         disabled={periodIdx <= 0}
