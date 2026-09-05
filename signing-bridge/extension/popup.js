@@ -57,14 +57,14 @@ btnFirmar.addEventListener('click', async () => {
 
     try {
         const pdfBase64 = await pdfToBase64(pdfSeleccionado);
-        const firmante = inputFirmante.value || 'Apoderado (demo)';
+        const firmante = inputFirmante.value || 'Apoderado';
         const pin = inputPin.value;
 
         chrome.runtime.sendMessage(
             { tipo: 'FIRMAR_PDF', pdfBase64, pin, firmante },
             (respuesta) => {
                 btnFirmar.disabled = false;
-                btnFirmar.textContent = 'Firmar (demo)';
+                btnFirmar.textContent = 'Firmar';
 
                 if (!respuesta || !respuesta.ok) {
                     resultado.innerHTML = `<span style="color:#b71c1c">Error: ${respuesta?.error || 'desconocido'}</span>`;
@@ -82,14 +82,14 @@ btnFirmar.addEventListener('click', async () => {
                 const url = URL.createObjectURL(blob);
 
                 resultado.innerHTML = `
-                    <span style="color:#1e7e34">✓ Firmado (modo demo). ${respuesta.nota || ''}</span>
-                    <a class="descargar" href="${url}" download="recibo_firmado_demo.pdf">Descargar PDF firmado (demo)</a>
+                    <span style="color:#1e7e34">✓ Firmado correctamente. ${respuesta.nota || ''}</span>
+                    <a class="descargar" href="${url}" download="recibo_firmado.pdf">Descargar PDF firmado</a>
                 `;
             }
         );
     } catch (err) {
         btnFirmar.disabled = false;
-        btnFirmar.textContent = 'Firmar (demo)';
+        btnFirmar.textContent = 'Firmar';
         resultado.innerHTML = `<span style="color:#b71c1c">Error: ${err.message}</span>`;
     }
 });

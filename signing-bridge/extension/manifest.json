@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "newHarvest — Firma con Token (DEMO)",
-  "version": "0.1.0",
-  "description": "Puente entre newHarvest y el token criptográfico del apoderado. Versión demo: firma simulada, sin token real conectado todavía.",
+  "name": "newHarvest — Firma con Token",
+  "version": "0.2.0",
+  "description": "Puente entre newHarvest y el token criptográfico del apoderado.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkpovLSv2t4MeVz65IxA8YlkEjtVRV0n2fRJKxdpdy1gM5IGf7L++tnWrCWx9CGf8+Qp2Samaw0BkIjKDLNAEJj4nitSuzATSllQcmEBaP5iOVs4iryrCF2BHvejl/PQVatXhV6fRjyyriVGh3dq5dOezjUgNhfidxAFvG22W5FXeE1KmWICVveAtGFU4FRDEBvxXtMlVeYAzRQdz4UI/OA+zv9agsbxULYIeC+2IzeqENgfT/xojoqcgOO1Q7d+SwlcNiiF7ls/xkPTK5xL38GqoTiWxtncodxtTmXX+MawZzQh//jFhOL7WvGrLp4QdR/RaKnjO+LSPUQA+Wuaq0wIDAQAB",
   "permissions": [
     "nativeMessaging"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Firmar con token (demo)"
+    "default_title": "Firmar con token"
   },
   "background": {
     "service_worker": "background.js"

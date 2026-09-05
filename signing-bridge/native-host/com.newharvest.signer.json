@@ -1,9 +1,0 @@
-{
-  "name": "com.newharvest.signer",
-  "description": "newHarvest - Puente de firma con token criptografico (demo)",
-  "path": "RUTA_ABSOLUTA_A_host.py_O_AL_.bat_QUE_LO_EJECUTA",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://ID_DE_LA_EXTENSION_AQUI/"
-  ]
-}

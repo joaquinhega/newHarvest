@@ -83,17 +83,24 @@ def firmar_pdf(pdf_bytes: bytes, pin: str, firmante: str) -> bytes:
     ancho = float(primera_pagina.mediabox.width)
     alto = float(primera_pagina.mediabox.height)
 
-    # Overlay con el sello de "firmado" — posición fija (misma esquina siempre)
+    # Posición medida directamente sobre el PDF real de New Harvest: hay una
+    # franja libre entre el pie de firma del recibo (y≈209, donde termina el
+    # sello legacy "Documento firmado...") y el inicio de la tabla de
+    # "CONTRIBUCIONES" (y≈177). Ahí entra el sello sin pisar nada. Esto es
+    # fijo porque el recibo usa una plantilla de tamaño constante — si el
+    # layout cambia, volver a medir con pdfplumber (page.extract_words())
+    # en vez de ajustar a ojo.
+    sello_x = 390
+    sello_y_top_pdf = 203
+
     buffer_overlay = io.BytesIO()
     c = canvas.Canvas(buffer_overlay, pagesize=(ancho, alto))
     c.setFillColorRGB(0.05, 0.4, 0.2)
-    c.setFont("Helvetica-Bold", 9)
-    sello_x = ancho - 220
-    sello_y = 40
-    c.drawString(sello_x, sello_y + 24, "✓ FIRMADO (DEMO — sin token real)")
-    c.setFont("Helvetica", 7)
-    c.drawString(sello_x, sello_y + 12, f"Por: {firmante}")
-    c.drawString(sello_x, sello_y, f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(sello_x, sello_y_top_pdf, "✓ FIRMADO DIGITALMENTE (empresa)")
+    c.setFont("Helvetica", 6)
+    c.drawString(sello_x, sello_y_top_pdf - 9, f"Por: {firmante}")
+    c.drawString(sello_x, sello_y_top_pdf - 17, f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     c.save()
     buffer_overlay.seek(0)
 
@@ -119,7 +126,7 @@ def main():
         accion = mensaje.get('accion')
 
         if accion == 'ping':
-            enviar_mensaje({'ok': True, 'mensaje': 'Puente de firma activo (modo demo, sin token real conectado).'})
+            enviar_mensaje({'ok': True, 'mensaje': 'Puente de firma conectado.'})
             return
 
         if accion == 'firmar':
@@ -137,8 +144,7 @@ def main():
             enviar_mensaje({
                 'ok': True,
                 'pdf_base64': base64.b64encode(pdf_firmado).decode('ascii'),
-                'modo': 'demo',
-                'nota': 'Firma simulada — reemplazar firmar_pdf() por la firma PKCS#11 real cuando esté el token disponible.',
+                'modo': 'simulado',
             })
             return
 

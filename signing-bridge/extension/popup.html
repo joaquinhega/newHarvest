@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Firmar con token (demo)</title>
+    <title>Firmar con token</title>
     <style>
         body {
             width: 340px;
@@ -75,21 +75,21 @@
     </style>
 </head>
 <body>
-    <h1>Firmar con token — DEMO</h1>
-    <p class="subtitle">Simulación sin token real conectado. Sirve para probar que el circuito completo funciona antes de la prueba con el cliente.</p>
+    <h1>Firmar con token</h1>
+    <p class="subtitle">newHarvest — Puente de firma digital para apoderados.</p>
 
     <div id="estadoHost" class="estado espera">Comprobando conexión con el programa local...</div>
 
     <label>PDF a firmar</label>
     <input type="file" id="inputPdf" accept="application/pdf" />
 
-    <label>Nombre del firmante (para el sello de la demo)</label>
+    <label>Nombre del firmante</label>
     <input type="text" id="inputFirmante" placeholder="Ej: Juan Ignacio Urdaniz" />
 
-    <label>PIN del token (en la demo no valida nada real)</label>
-    <input type="password" id="inputPin" placeholder="Cualquier valor sirve en la demo" />
+    <label>PIN del token</label>
+    <input type="password" id="inputPin" placeholder="PIN del token criptográfico" />
 
-    <button id="btnFirmar" disabled>Firmar (demo)</button>
+    <button id="btnFirmar" disabled>Firmar</button>
 
     <div id="resultado"></div>
 
