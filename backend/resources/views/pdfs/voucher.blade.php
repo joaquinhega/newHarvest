@@ -10,375 +10,286 @@
             box-sizing: border-box;
         }
 
+        @page {
+            margin: 0;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #1a1a1a;
-            line-height: 1.4;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #0066cc;
-            padding-bottom: 20px;
-        }
-
-        .logo-section {
-            max-width: 150px;
-        }
-
-        .logo-section img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .title-section {
-            text-align: right;
-            flex: 1;
-        }
-
-        .title-section h1 {
-            font-size: 28px;
-            color: #0066cc;
-            margin-bottom: 5px;
-        }
-
-        .title-section p {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            margin-top: 10px;
-            text-transform: uppercase;
-        }
-
-        .status-badge.aprobado {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-badge.pendiente {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .info-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #0066cc;
-        }
-
-        .info-label {
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
-
-        .info-value {
-            font-size: 14px;
-            font-weight: 600;
+            font-family: Helvetica, Arial, sans-serif;
             color: #1a1a1a;
         }
 
-        .full-width {
-            grid-column: 1 / -1;
+        .page {
+            padding: 40px 55px;
         }
 
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #0066cc;
-            margin: 25px 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+        /* ===== Header ===== */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .route-section {
-            background-color: #f0f7ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .header-table td {
+            vertical-align: middle;
         }
 
-        .route-item {
-            display: flex;
-            margin-bottom: 15px;
-            align-items: flex-start;
+        .logo-cell {
+            width: 22%;
         }
 
-        .route-item:last-child {
-            margin-bottom: 0;
+        .logo-cell img {
+            max-height: 55px;
+            max-width: 160px;
         }
 
-        .route-icon {
-            font-size: 20px;
-            margin-right: 15px;
-            color: #0066cc;
-            flex-shrink: 0;
-        }
-
-        .route-info h3 {
-            font-size: 13px;
-            color: #1a1a1a;
-            margin-bottom: 3px;
-        }
-
-        .route-info p {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .amount-section {
-            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: right;
-            margin-bottom: 20px;
-        }
-
-        .amount-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            opacity: 0.9;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
-
-        .amount-value {
-            font-size: 32px;
-            font-weight: bold;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .detail-box {
-            background-color: #f8f9fa;
-            padding: 12px;
-            border-radius: 6px;
+        .title-cell {
+            width: 56%;
             text-align: center;
         }
 
-        .detail-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 5px;
+        .title-cell h1 {
+            font-size: 30px;
             font-weight: bold;
-        }
-
-        .detail-value {
-            font-size: 13px;
+            letter-spacing: 1px;
             color: #1a1a1a;
-            font-weight: 600;
         }
 
-        .observations {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            min-height: 50px;
+        .voucher-number {
+            font-size: 13px;
+            margin-top: 2px;
+            color: #1a1a1a;
         }
 
-        .observations-label {
+        .date-label {
+            font-size: 10px;
+            color: #555;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        .date-boxes {
+            display: inline-block;
+        }
+
+        .date-box {
+            display: inline-block;
+            border: 1px solid #999;
+            border-radius: 3px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 2px;
+        }
+
+        .company-cell {
+            width: 22%;
+            text-align: right;
+        }
+
+        .company-cell img {
+            max-height: 55px;
+            max-width: 160px;
+        }
+
+        .divider {
+            border-bottom: 2px solid #1a1a1a;
+            margin: 28px 0 42px 0;
+        }
+
+        /* ===== Cuerpo: datos + firma ===== */
+        .body-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .body-table td {
+            vertical-align: top;
+        }
+
+        .data-col {
+            width: 62%;
+        }
+
+        .signature-col {
+            width: 38%;
+            text-align: center;
+        }
+
+        .data-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 22px;
+        }
+
+        .data-row-inner {
+            display: table-row;
+        }
+
+        .data-label {
+            display: table-cell;
+            background-color: #1a1a1a;
+            color: #ffffff;
             font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
-            color: #0066cc;
+            letter-spacing: 0.5px;
+            padding: 13px 16px;
+            width: 160px;
+            white-space: nowrap;
+        }
+
+        .data-value {
+            display: table-cell;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 13px 0 13px 18px;
+            vertical-align: middle;
+        }
+
+        .signature-passenger-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 8px;
         }
 
-        .observations-text {
-            font-size: 13px;
-            color: #1a1a1a;
-            font-style: italic;
+        .signature-passenger-img {
+            max-width: 180px;
+            max-height: 70px;
         }
 
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 11px;
-            color: #666;
+        .signature-placeholder {
+            border-bottom: 1px solid #999;
+            width: 200px;
+            height: 80px;
+            margin: 10px auto 0 auto;
         }
 
-        .generated-date {
-            font-size: 11px;
-            color: #999;
-            text-align: right;
-            margin-top: 20px;
-        }
-
-        table {
+        /* ===== Footer: monto + firma ===== */
+        .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 85px;
         }
 
-        tr {
-            border-bottom: 1px solid #e0e0e0;
+        .footer-table td {
+            vertical-align: bottom;
         }
 
-        td {
-            padding: 10px 0;
-            font-size: 13px;
+        .amount-col {
+            width: 50%;
         }
 
-        .label-col {
+        .amount-value {
+            font-size: 22px;
             font-weight: bold;
-            color: #0066cc;
-            width: 35%;
+            margin-bottom: 8px;
         }
 
-        .value-col {
-            color: #1a1a1a;
+        .footer-label {
+            display: inline-block;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 20px;
+        }
+
+        .firma-col {
+            width: 50%;
+            text-align: center;
+        }
+
+        .generated-note {
+            margin-top: 30px;
+            text-align: right;
+            font-size: 8.5px;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page">
         <!-- Header -->
-        <div class="header">
-            @if($logo_empresa)
-                <div class="logo-section">
-                    <img src="{{ $logo_empresa }}" alt="Logo Empresa">
-                </div>
-            @endif
-            <div class="title-section">
-                <h1>VOUCHER</h1>
-                <p>Recibo de Viaje</p>
-                <div class="status-badge {{ strtolower($status) }}">
-                    {{ $status }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Información Principal -->
-        <div class="info-grid">
-            <div class="info-box">
-                <div class="info-label">Número de Remito</div>
-                <div class="info-value">{{ $remito_code }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Fecha</div>
-                <div class="info-value">{{ $fecha }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Pasajero</div>
-                <div class="info-value">{{ $pasajero }}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-label">Empresa</div>
-                <div class="info-value">{{ $empresa }}</div>
-            </div>
-        </div>
-
-        <!-- Sección de Ruta -->
-        <h3 class="section-title">Itinerario del Viaje</h3>
-        <div class="route-section">
-            <div class="route-item">
-                <div class="route-icon">📍</div>
-                <div class="route-info">
-                    <h3>Origen</h3>
-                    <p><strong>{{ $origen }}</strong></p>
-                    <p>Salida: {{ $hora_origen }} hs</p>
-                </div>
-            </div>
-            <div class="route-item">
-                <div class="route-icon">→</div>
-                <div class="route-info">
-                    <h3>Destino</h3>
-                    <p><strong>{{ $destino }}</strong></p>
-                    <p>Llegada: {{ $hora_destino }} hs</p>
-                </div>
-            </div>
-            @if($tiempo_espera > 0)
-                <div class="route-item">
-                    <div class="route-icon">⏱</div>
-                    <div class="route-info">
-                        <h3>Tiempo de Espera</h3>
-                        <p><strong>{{ $tiempo_espera }} minutos</strong></p>
+        <table class="header-table">
+            <tr>
+                <td class="logo-cell">
+                    @if($logo_newharvest)
+                        <img src="{{ $logo_newharvest }}" alt="New Harvest">
+                    @endif
+                </td>
+                <td class="title-cell">
+                    <h1>VOUCHER</h1>
+                    <div class="voucher-number">N°: {{ $remito_code }}</div>
+                    <div class="date-label">Fecha:</div>
+                    <div class="date-boxes">
+                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('d') }}</span>
+                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('m') }}</span>
+                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('Y') }}</span>
                     </div>
-                </div>
-            @endif
-        </div>
+                </td>
+                <td class="company-cell">
+                    @if($logo_empresa)
+                        <img src="{{ $logo_empresa }}" alt="{{ $empresa }}">
+                    @endif
+                </td>
+            </tr>
+        </table>
 
-        <!-- Importe -->
-        <div class="amount-section">
-            <div class="amount-label">Importe del Viaje</div>
-            <div class="amount-value">$ {{ $monto }}</div>
-        </div>
+        <div class="divider"></div>
 
-        <!-- Detalles -->
-        <div class="details-grid">
-            <div class="detail-box">
-                <div class="detail-label">Chofer Responsable</div>
-                <div class="detail-value">{{ $chofer }}</div>
-            </div>
-            <div class="detail-box">
-                <div class="detail-label">Estado</div>
-                <div class="detail-value">{{ $status }}</div>
-            </div>
-            <div class="detail-box">
-                <div class="detail-label">Generado</div>
-                <div class="detail-value">{{ date('d/m/Y') }}</div>
-            </div>
-        </div>
+        <!-- Cuerpo -->
+        <table class="body-table">
+            <tr>
+                <td class="data-col">
+                    <div class="data-row"><div class="data-row-inner">
+                        <div class="data-label">Empresa:</div>
+                        <div class="data-value">{{ $empresa }}</div>
+                    </div></div>
 
-        <!-- Observaciones -->
-        @if($observaciones)
-            <div class="observations">
-                <div class="observations-label">Observaciones</div>
-                <div class="observations-text">{{ $observaciones }}</div>
-            </div>
-        @endif
+                    <div class="data-row"><div class="data-row-inner">
+                        <div class="data-label">Origen:</div>
+                        <div class="data-value">{{ $origen }}{{ $hora_origen && $hora_origen !== '--:--' ? ' (' . $hora_origen . 'hs)' : '' }}</div>
+                    </div></div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p>Este documento es un comprobante de pago emitido por New Harvest Transportes.</p>
-            <p>Para consultas o reclamos, contáctenos a través de nuestro sistema de atención al cliente.</p>
-        </div>
+                    <div class="data-row"><div class="data-row-inner">
+                        <div class="data-label">Destino:</div>
+                        <div class="data-value">{{ $destino }}{{ $hora_destino && $hora_destino !== '--:--' ? ' (' . $hora_destino . 'hs)' : '' }}</div>
+                    </div></div>
 
-        <div class="generated-date">
-            Generado el {{ date('d/m/Y H:i') }}
-        </div>
+                    <div class="data-row"><div class="data-row-inner">
+                        <div class="data-label">Tiempo espera:</div>
+                        <div class="data-value">{{ $tiempo_espera }} min</div>
+                    </div></div>
+                </td>
+                <td class="signature-col">
+                    <div class="signature-passenger-label">Firma del pasajero</div>
+                    @if($firma_url)
+                        <img src="{{ $firma_url }}" class="signature-passenger-img" alt="Firma">
+                    @else
+                        <div class="signature-placeholder"></div>
+                    @endif
+                </td>
+            </tr>
+        </table>
+
+        <!-- Footer: monto + firma -->
+        <table class="footer-table">
+            <tr>
+                <td class="amount-col">
+                    <div class="amount-value">$ {{ $monto }}</div>
+                    <div class="footer-label">Monto:</div>
+                </td>
+                <td class="firma-col">
+                    <div class="footer-label">Firma:</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="generated-note">Generado el {{ $generado_en }}</div>
     </div>
 </body>
 </html>

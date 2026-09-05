@@ -15,6 +15,11 @@ class VoucherPdfController extends Controller
     {
         $voucher = Voucher::where('borrado', false)->findOrFail($id);
 
+        $logoPath = resource_path('assets/logo-newharvest-negro.png');
+        $logoNewHarvest = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+
         // Preparar datos del voucher
         $data = [
             'id' => $voucher->id,
@@ -31,14 +36,18 @@ class VoucherPdfController extends Controller
             'monto' => number_format((float)($voucher->amount ?: 0), 2, ',', '.'),
             'observaciones' => $voucher->observation ?: '',
             'firma' => $voucher->signature_path,
+            'firma_url' => $voucher->signature_path ? asset('storage/' . $voucher->signature_path) : null,
             'status' => $voucher->status === 'aprobado' ? 'Aprobado' : 'Pendiente',
             'logo_empresa' => $voucher->company && $voucher->company->logo_blob
                 ? 'data:' . ($voucher->company->logo_mime ?: 'image/png') . ';base64,' . base64_encode($voucher->company->logo_blob)
                 : null,
+            'logo_newharvest' => $logoNewHarvest,
+            'generado_en' => now()->format('d/m/Y H:i'),
         ];
 
-        // Generar PDF
-        $pdf = Pdf::loadView('pdfs.voucher', $data);
+        // Generar PDF en horizontal
+        $pdf = Pdf::loadView('pdfs.voucher', $data)
+            ->setPaper('a4', 'landscape');
 
         return $pdf->download("Voucher_{$voucher->remito_code}.pdf");
     }
