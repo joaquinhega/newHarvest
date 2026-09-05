@@ -226,9 +226,9 @@
                     <div class="voucher-number">N°: {{ $remito_code }}</div>
                     <div class="date-label">Fecha:</div>
                     <div class="date-boxes">
-                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('d') }}</span>
-                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('m') }}</span>
-                        <span class="date-box">{{ \Carbon\Carbon::parse($fecha)->format('Y') }}</span>
+                        <span class="date-box">{{ $fecha_dia }}</span>
+                        <span class="date-box">{{ $fecha_mes }}</span>
+                        <span class="date-box">{{ $fecha_anio }}</span>
                     </div>
                 </td>
                 <td class="company-cell">
