@@ -146,6 +146,10 @@ class SalaryReceiptController extends Controller
             return $this->errorResponse('No autorizado para firmar este recibo.', 403);
         }
 
+        if (! $salaryReceipt->employer_signed_at) {
+            return $this->errorResponse('Este recibo todavía no fue firmado por la empresa. Esperá la notificación para poder firmarlo.', 422);
+        }
+
         $request->validate([
             'signature_base64' => ['required', 'string'],
             'legal_accepted'   => ['required', 'accepted'],
