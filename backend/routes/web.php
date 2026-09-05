@@ -12,7 +12,6 @@ use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\SanctionController;
 use App\Http\Controllers\SalaryReceiptController;
-use App\Http\Controllers\PdfSignatureCheckController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -83,8 +82,4 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
         Route::put('/sanciones/{id}', [SanctionController::class, 'update'])->name('sanciones.update');
         Route::delete('/sanciones/{id}', [SanctionController::class, 'destroy'])->name('sanciones.destroy');
     });
-
-    // Herramientas (generales, no específicas de RRHH)
-    Route::get('/herramientas/verificar-firma', [PdfSignatureCheckController::class, 'index'])->name('herramientas.verificarFirma');
-    Route::post('/herramientas/verificar-firma/check', [PdfSignatureCheckController::class, 'check'])->name('herramientas.verificarFirma.check');
 });

@@ -9,8 +9,7 @@ import {
     AlertTriangle, 
     Calendar, 
     ChevronLeft, 
-    LogOut,
-    ShieldCheck
+    LogOut 
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -56,12 +55,6 @@ export default function AuthenticatedLayout({ children, title, subtitle, actions
                 { label: 'Recibos de sueldo', href: '/rrhh/recibos', icon: FileText },
                 { label: 'Sanciones', href: '/rrhh/sanciones', icon: AlertTriangle },
                 { label: 'Vacaciones y certificados', href: '/rrhh/vacaciones', icon: Calendar },
-            ]
-        },
-        {
-            group: 'Herramientas',
-            items: [
-                { label: 'Verificar firma PDF', href: '/herramientas/verificar-firma', icon: ShieldCheck },
             ]
         }
     ];
