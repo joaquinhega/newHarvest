@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "newHarvest — Firma con Token (DEMO)",
+  "version": "0.1.0",
+  "description": "Puente entre newHarvest y el token criptográfico del apoderado. Versión demo: firma simulada, sin token real conectado todavía.",
+  "permissions": [
+    "nativeMessaging"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Firmar con token (demo)"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

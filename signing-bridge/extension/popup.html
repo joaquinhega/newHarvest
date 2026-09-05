@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Firmar con token (demo)</title>
+    <style>
+        body {
+            width: 340px;
+            font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+            padding: 16px;
+            margin: 0;
+            color: #1a1a1a;
+        }
+        h1 {
+            font-size: 14px;
+            margin: 0 0 4px 0;
+        }
+        p.subtitle {
+            font-size: 11px;
+            color: #666;
+            margin: 0 0 14px 0;
+        }
+        .estado {
+            font-size: 11px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .estado.ok { background: #e6f4ea; color: #1e7e34; }
+        .estado.error { background: #fdecea; color: #b71c1c; }
+        .estado.espera { background: #f1f1f1; color: #555; }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            margin-top: 10px;
+        }
+        input[type="file"], input[type="text"], input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            width: 100%;
+            margin-top: 14px;
+            padding: 9px;
+            background: #6d28d9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #resultado {
+            margin-top: 12px;
+            font-size: 11px;
+        }
+        a.descargar {
+            display: block;
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6d28d9;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firmar con token — DEMO</h1>
+    <p class="subtitle">Simulación sin token real conectado. Sirve para probar que el circuito completo funciona antes de la prueba con el cliente.</p>
+
+    <div id="estadoHost" class="estado espera">Comprobando conexión con el programa local...</div>
+
+    <label>PDF a firmar</label>
+    <input type="file" id="inputPdf" accept="application/pdf" />
+
+    <label>Nombre del firmante (para el sello de la demo)</label>
+    <input type="text" id="inputFirmante" placeholder="Ej: Juan Ignacio Urdaniz" />
+
+    <label>PIN del token (en la demo no valida nada real)</label>
+    <input type="password" id="inputPin" placeholder="Cualquier valor sirve en la demo" />
+
+    <button id="btnFirmar" disabled>Firmar (demo)</button>
+
+    <div id="resultado"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
