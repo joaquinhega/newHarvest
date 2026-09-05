@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Button from '@/Components/UI/Button';
@@ -33,6 +33,21 @@ export default function Empresas({ empresas = [] }) {
             (emp.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [empresas, searchTerm]);
+
+    // Si venimos desde el detalle de un Voucher (?highlight=ID), abrimos la ficha directamente
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const highlightId = params.get('highlight');
+        if (!highlightId) return;
+
+        const company = empresas.find((emp) => String(emp.id) === String(highlightId));
+        if (company) {
+            setSelectedCompany(company);
+            setIsDetailOpen(true);
+        }
+        // Solo al montar: no queremos reabrir el modal si el usuario ya lo cerró.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Generador de iniciales institucionales (2 letras)
     const getInitials = (name) => {
