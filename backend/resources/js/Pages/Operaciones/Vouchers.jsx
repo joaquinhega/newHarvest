@@ -18,7 +18,8 @@ import {
     Building2, 
     PenTool,
     RotateCcw,
-    MoreVertical
+    MoreVertical,
+    AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -39,9 +40,21 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     const activeCompany = activeCompanyId
         ? companies.find((c) => String(c.id) === String(activeCompanyId))
         : null;
+    const isUnassigned = !!filters.unassigned;
 
-    const handleClearCompanyFilter = () => {
+    const handleClearAssignmentFilter = () => {
         router.get('/vouchers', { status: currentStatus, search: searchTerm, date_from: dateFrom, date_to: dateTo }, { preserveState: true, replace: true });
+    };
+
+    const handleToggleUnassigned = () => {
+        const next = !isUnassigned;
+        router.get('/vouchers', {
+            status: currentStatus,
+            search: searchTerm,
+            date_from: dateFrom,
+            date_to: dateTo,
+            ...(next ? { unassigned: 1 } : {}),
+        }, { preserveState: true, replace: true });
     };
 
     const editForm = useForm({
@@ -89,7 +102,7 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             search: searchTerm,
             ...(dateFrom ? { date_from: dateFrom } : {}),
             ...(dateTo ? { date_to: dateTo } : {}),
-            ...(activeCompanyId ? { company_id: activeCompanyId } : {}),
+            ...(isUnassigned ? { unassigned: 1 } : (activeCompanyId ? { company_id: activeCompanyId } : {})),
         });
         window.location.href = `/vouchers/export/excel?${params.toString()}`;
     };
@@ -177,7 +190,7 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     return (
         <AuthenticatedLayout
             title="Vouchers"
-            subtitle={`${filteredVouchers.length} vouchers ${currentStatus === 'pendiente' ? 'sin aprobar' : 'aprobados'}${activeCompany ? ` de ${activeCompany.name}` : ''}`}
+            subtitle={`${filteredVouchers.length} vouchers ${currentStatus === 'pendiente' ? 'sin aprobar' : 'aprobados'}${activeCompany ? ` de ${activeCompany.name}` : ''}${isUnassigned ? ' sin empresa asignada' : ''}`}
             actions={
                 <div className="flex items-center gap-2">
                     <Button 
@@ -224,9 +237,25 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                             Empresa: {activeCompany.name}
                             <button
                                 type="button"
-                                onClick={handleClearCompanyFilter}
+                                onClick={handleClearAssignmentFilter}
                                 className="ml-1 text-brand-500 hover:text-brand-800"
                                 title="Quitar filtro de empresa"
+                            >
+                                ✕
+                            </button>
+                        </span>
+                    </div>
+                )}
+                {isUnassigned && (
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Sin empresa asignada
+                            <button
+                                type="button"
+                                onClick={handleClearAssignmentFilter}
+                                className="ml-1 text-amber-600 hover:text-amber-900"
+                                title="Quitar filtro"
                             >
                                 ✕
                             </button>
@@ -272,12 +301,28 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
                             </button>
                         )}
                     </div>
+                    <div className="flex items-center gap-2 shrink-0 lg:pl-3 lg:border-l lg:border-ink-100">
+                        <button
+                            type="button"
+                            onClick={handleToggleUnassigned}
+                            className={cn(
+                                "flex items-center gap-1.5 text-xs font-semibold rounded-lg border px-2.5 py-1.5 transition-colors whitespace-nowrap",
+                                isUnassigned
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : "bg-[#FAF9FB] text-ink-600 border-ink-200 hover:text-ink-950"
+                            )}
+                            title="Ver solo vouchers sin empresa asignada"
+                        >
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Sin empresa
+                        </button>
+                    </div>
                 </div>
 
                 <Table
                     headers={tableHeaders}
                     isEmpty={filteredVouchers.length === 0}
-                    emptyMessage={`No se encontraron vouchers ${currentStatus === 'pendiente' ? 'pendientes de aprobación' : 'aprobados'}.`}
+                    emptyMessage={`No se encontraron vouchers ${currentStatus === 'pendiente' ? 'pendientes de aprobación' : 'aprobados'}${isUnassigned ? ' sin empresa asignada' : ''}.`}
                 >
                     {filteredVouchers.map((item) => (
                         <tr key={item.id} className="hover:bg-[#FAF9FB] transition-colors">

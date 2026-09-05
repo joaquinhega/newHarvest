@@ -18,8 +18,9 @@ class VoucherController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $companyId = $request->input('company_id');
+        $unassigned = $request->boolean('unassigned');
 
-        $query = $this->buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId);
+        $query = $this->buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId, $unassigned);
 
         $vouchers = $query->orderByDesc('date')
             ->orderByDesc('id')
@@ -73,6 +74,7 @@ class VoucherController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
                 'company_id' => $companyId,
+                'unassigned' => $unassigned,
             ],
         ]);
     }
@@ -84,8 +86,9 @@ class VoucherController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $companyId = $request->input('company_id');
+        $unassigned = $request->boolean('unassigned');
 
-        $query = $this->buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId);
+        $query = $this->buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId, $unassigned);
         $vouchers = $query->orderByDesc('date')->orderByDesc('id')->get();
 
         $filename = "vouchers_{$status}_" . date('Ymd_His') . ".csv";
@@ -137,7 +140,7 @@ class VoucherController extends Controller
         ]);
     }
 
-    private function buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId = null)
+    private function buildFilteredQuery($status, $search, $dateFrom, $dateTo, $companyId = null, $unassigned = false)
     {
         $query = Voucher::query()->with(['company', 'user'])->where('borrado', false);
 
@@ -149,7 +152,9 @@ class VoucherController extends Controller
             });
         }
 
-        if ($companyId) {
+        if ($unassigned) {
+            $query->whereNull('company_id');
+        } elseif ($companyId) {
             $query->where('company_id', $companyId);
         }
 
