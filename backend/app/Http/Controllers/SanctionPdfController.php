@@ -25,7 +25,7 @@ class SanctionPdfController extends Controller
             'firmado' => ! empty($sanction->signed_at) || $sanction->status === 'firmado',
             'firma_url' => $this->embedImage($sanction->signature_path),
             'firmado_en' => $sanction->signed_at ? $sanction->signed_at->format('d/m/Y H:i') : null,
-            'logo_newharvest' => $this->embedAsset('logo-newharvest-negro.png'),
+            'logo_newharvest' => $this->embedAsset('logo-newharvest-blanco.png'),
             'generado_en' => now()->format('d/m/Y H:i'),
         ];
 

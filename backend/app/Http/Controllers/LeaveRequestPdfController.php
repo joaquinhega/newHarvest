@@ -39,7 +39,7 @@ class LeaveRequestPdfController extends Controller
             'estado_raw' => $leave->status,
             'revisor' => $leave->reviewer ? "{$leave->reviewer->first_name} {$leave->reviewer->last_name}" : null,
             'accion_en' => $leave->action_at ? $leave->action_at->format('d/m/Y H:i') : null,
-            'logo_newharvest' => $this->embedAsset('logo-newharvest-negro.png'),
+            'logo_newharvest' => $this->embedAsset('logo-newharvest-blanco.png'),
             'generado_en' => now()->format('d/m/Y H:i'),
         ];
 
