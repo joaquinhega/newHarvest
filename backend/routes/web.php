@@ -65,7 +65,6 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
         Route::delete('/vacaciones/{id}', [LeaveRequestController::class, 'destroy'])->name('vacaciones.destroy');
 
         // Sanciones y Recibos
-    Route::post('/recibos/importar', [SalaryReceiptController::class, 'import'])->name('recibos.import');
     Route::post('/recibos/importar-masivo/analizar', [SalaryReceiptController::class, 'analyzeBulk'])->name('recibos.bulkAnalyze');
     Route::post('/recibos/importar-masivo/confirmar', [SalaryReceiptController::class, 'confirmBulk'])->name('recibos.bulkConfirm');
     Route::post('/recibos/firmar-lote', [SalaryReceiptController::class, 'signBatch'])->name('recibos.signBatch');

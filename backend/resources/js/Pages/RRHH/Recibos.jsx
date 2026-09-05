@@ -66,7 +66,6 @@ export default function Recibos({
     const [selectedRecibo, setSelectedRecibo]   = useState(null);
     const [selectedIds, setSelectedIds]         = useState([]);
     const [isDetailOpen, setIsDetailOpen]       = useState(false);
-    const [isUploadOpen, setIsUploadOpen]       = useState(false);
     const [isReassignOpen, setIsReassignOpen]   = useState(false);
     const [isSignBatchOpen, setIsSignBatchOpen] = useState(false);
     const [isSigning, setIsSigning]             = useState(false);
@@ -88,11 +87,6 @@ export default function Recibos({
     const initialPeriod = (filters.period && filters.period !== 'todos') ? filters.period : getCurrentPeriod();
     const [activePeriod, setActivePeriod] = useState(initialPeriod);
     const [showAllPeriods, setShowAllPeriods] = useState(!filters.period || filters.period === 'todos');
-
-    // Upload: múltiples PDFs con metadatos editables antes de confirmar
-    const [pendingFiles, setPendingFiles] = useState([]); // [{ file, employee_id, period, name }]
-    const [isUploading, setIsUploading]   = useState(false);
-    const fileInputRef = useRef(null);
 
     const reassignForm = useForm({ employee_id: '', period: '' });
 
@@ -183,57 +177,6 @@ export default function Recibos({
         }
     };
 
-    // Upload múltiple: al seleccionar archivos los agrego a pendingFiles
-    const handleFilesSelected = (e) => {
-        const files = Array.from(e.target.files);
-        const newPending = files.map(file => ({
-            file,
-            name: file.name,
-            employee_id: '',
-            period: activePeriod,
-        }));
-        setPendingFiles(prev => [...prev, ...newPending]);
-        e.target.value = '';
-    };
-
-    const updatePending = (idx, field, value) => {
-        setPendingFiles(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
-    };
-
-    const removePending = (idx) => setPendingFiles(prev => prev.filter((_, i) => i !== idx));
-
-    const handleUploadAll = () => {
-        const invalid = pendingFiles.filter(f => !f.employee_id || !f.period);
-        if (invalid.length) { alert('Todos los archivos deben tener empleado y período asignados.'); return; }
-
-        setIsUploading(true);
-
-        // Sube los archivos de a uno, en secuencia, usando el router de Inertia
-        // (maneja el token CSRF automáticamente vía cookie, sin depender de meta tags).
-        const uploadNext = (index) => {
-            if (index >= pendingFiles.length) {
-                setIsUploading(false);
-                setPendingFiles([]);
-                setIsUploadOpen(false);
-                router.reload({ only: ['recibos', 'metrics'] });
-                return;
-            }
-            const pending = pendingFiles[index];
-            router.post('/rrhh/recibos/importar', {
-                employee_id: pending.employee_id,
-                period: pending.period,
-                pdf: pending.file,
-            }, {
-                forceFormData: true,
-                preserveScroll: true,
-                preserveState: true,
-                onFinish: () => uploadNext(index + 1),
-            });
-        };
-
-        uploadNext(0);
-    };
-
     // --- Importación masiva con división automática ---
     const resetBulk = () => {
         setBulkStep('upload');
@@ -293,6 +236,8 @@ export default function Recibos({
                     gross_amount: g.gross_amount,
                     deductions_amount: g.deductions_amount,
                     net_amount: g.net_amount,
+                    employee_already_signed: g.employee_already_signed,
+                    employer_already_signed: g.employer_already_signed,
                 })),
             });
             setIsBulkOpen(false);
@@ -319,10 +264,7 @@ export default function Recibos({
                     <Button variant="secondary" onClick={handleExport}>
                         <FileSpreadsheet className="w-4 h-4 text-verify-700" /> Exportar Excel
                     </Button>
-                    <Button variant="secondary" onClick={() => { resetBulk(); setIsBulkOpen(true); }}>
-                        <Layers className="w-4 h-4" /> Importar PDF masivo
-                    </Button>
-                    <Button onClick={() => setIsUploadOpen(true)}>
+                    <Button onClick={() => { resetBulk(); setIsBulkOpen(true); }}>
                         <Upload className="w-4 h-4" /> Subir recibos
                     </Button>
                 </div>
@@ -660,99 +602,6 @@ export default function Recibos({
                 )}
             </Modal>
 
-            {/* MODAL: SUBIR RECIBOS (múltiples) */}
-            <Modal
-                isOpen={isUploadOpen}
-                onClose={() => { if (!isUploading) { setIsUploadOpen(false); setPendingFiles([]); } }}
-                title="Subir recibos de sueldo"
-                subtitle="Podés subir varios PDFs a la vez y asignarles empleado y período antes de confirmar"
-                maxWidth="2xl"
-                footer={
-                    <div className="flex items-center justify-between w-full">
-                        <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-brand-700 font-semibold hover:underline">
-                            + Agregar más archivos
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" disabled={isUploading} onClick={() => { setIsUploadOpen(false); setPendingFiles([]); }}>Cancelar</Button>
-                            <Button disabled={isUploading || pendingFiles.length === 0} onClick={handleUploadAll}>
-                                <Upload className="w-4 h-4" />
-                                {isUploading ? 'Subiendo...' : `Confirmar ${pendingFiles.length} ${pendingFiles.length === 1 ? 'recibo' : 'recibos'}`}
-                            </Button>
-                        </div>
-                    </div>
-                }
-            >
-                <div className="space-y-4">
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/pdf"
-                        multiple
-                        className="hidden"
-                        onChange={handleFilesSelected}
-                    />
-
-                    {pendingFiles.length === 0 ? (
-                        <div
-                            className="border-2 border-dashed border-ink-200 rounded-2xl p-10 text-center hover:border-brand-400 transition-colors cursor-pointer"
-                            onClick={() => fileInputRef.current?.click()}
-                            onDragOver={e => e.preventDefault()}
-                            onDrop={e => { e.preventDefault(); const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf'); if (files.length) { const newPending = files.map(file => ({ file, name: file.name, employee_id: '', period: activePeriod })); setPendingFiles(prev => [...prev, ...newPending]); } }}
-                        >
-                            <FileText className="w-10 h-10 text-ink-300 mx-auto mb-3" />
-                            <p className="text-sm font-semibold text-ink-600">Arrastrá los PDFs acá o hacé click para seleccionar</p>
-                            <p className="text-xs text-ink-400 mt-1">Podés seleccionar varios archivos a la vez · Máximo 10 MB por archivo</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {pendingFiles.map((pf, idx) => (
-                                <div key={idx} className="bg-ink-50 border border-ink-100 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                        <FileText className="w-5 h-5 text-brand-500 shrink-0" />
-                                        <span className="text-xs font-medium text-ink-700 truncate">{pf.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-                                        <select
-                                            value={pf.employee_id}
-                                            onChange={e => updatePending(idx, 'employee_id', e.target.value)}
-                                            className={cn('text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 flex-1 sm:w-44', !pf.employee_id ? 'border-danger-300 bg-danger-50' : 'border-ink-200 bg-white')}
-                                        >
-                                            <option value="">Empleado *</option>
-                                            {employees.map(emp => (
-                                                <option key={emp.id} value={emp.id}>{emp.last_name}, {emp.first_name}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            value={pf.period.split(' ')[0] || ''}
-                                            onChange={e => {
-                                                const year = pf.period.split(' ')[1] || new Date().getFullYear();
-                                                updatePending(idx, 'period', `${e.target.value} ${year}`);
-                                            }}
-                                            className={cn('text-xs border rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 w-28', !pf.period ? 'border-danger-300 bg-danger-50' : 'border-ink-200 bg-white')}
-                                        >
-                                            <option value="">Mes *</option>
-                                            {ALL_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-                                        </select>
-                                        <select
-                                            value={pf.period.split(' ')[1] || ''}
-                                            onChange={e => {
-                                                const month = pf.period.split(' ')[0] || ALL_MONTHS[new Date().getMonth()];
-                                                updatePending(idx, 'period', `${month} ${e.target.value}`);
-                                            }}
-                                            className="text-xs border border-ink-200 bg-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 w-20"
-                                        >
-                                            <option value="">Año</option>
-                                            {getYearOptions().map(y => <option key={y} value={y}>{y}</option>)}
-                                        </select>
-                                        <button type="button" onClick={() => removePending(idx)} className="text-ink-400 hover:text-danger-600 transition-colors text-xs font-bold px-1">✕</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </Modal>
-
             {/* MODAL: FIRMA POR LOTE */}
             <Modal
                 isOpen={isSignBatchOpen}
@@ -855,8 +704,8 @@ export default function Recibos({
             <Modal
                 isOpen={isBulkOpen}
                 onClose={() => { if (bulkStep !== 'analyzing' && bulkStep !== 'confirming') { setIsBulkOpen(false); resetBulk(); } }}
-                title="Importar PDF masivo"
-                subtitle="Subí el archivo único del liquidador con todos los empleados — el sistema detecta y separa cada recibo por CUIL"
+                title="Subir recibos de sueldo"
+                subtitle="Subí el PDF del liquidador — si trae a todos los empleados juntos, el sistema los detecta y separa por CUIL automáticamente. También sirve para un recibo suelto."
                 maxWidth="2xl"
                 footer={
                     <div className="flex items-center justify-between w-full">
@@ -893,8 +742,8 @@ export default function Recibos({
                             <p className="text-sm font-semibold text-brand-700">{bulkFile.name}</p>
                         ) : (
                             <>
-                                <p className="text-sm font-semibold text-ink-600">Arrastrá acá el PDF con todos los recibos del período</p>
-                                <p className="text-xs text-ink-400 mt-1">Un solo archivo · Máximo 20 MB · El sistema busca el CUIL de cada empleado dentro del PDF</p>
+                                <p className="text-sm font-semibold text-ink-600">Arrastrá acá el PDF del período</p>
+                                <p className="text-xs text-ink-400 mt-1">Un solo archivo, con 1 o varios empleados · Máximo 20 MB · Si trae varios, el sistema separa cada recibo por CUIL</p>
                             </>
                         )}
                     </div>
@@ -948,9 +797,13 @@ export default function Recibos({
                         </div>
 
                         <p className="text-xs text-ink-500">
-                            Se detectaron <strong>{bulkGroups.length}</strong> recibos en el PDF.
-                            {' '}{bulkGroups.filter(g => g.matched).length} coincidieron con un empleado automáticamente.
-                            Revisá y corregí los que no, o desmarcalos para excluirlos de esta importación.
+                            {bulkGroups.length === 1 && !bulkGroups[0].cuil_detected ? (
+                                <>No se detectó ningún CUIL en el PDF — asigná manualmente a qué empleado corresponde.</>
+                            ) : (
+                                <>Se detectaron <strong>{bulkGroups.length}</strong> {bulkGroups.length === 1 ? 'recibo' : 'recibos'} en el PDF.
+                                {' '}{bulkGroups.filter(g => g.matched).length} {bulkGroups.filter(g => g.matched).length === 1 ? 'coincidió' : 'coincidieron'} con un empleado automáticamente.
+                                Revisá y corregí los que no, o desmarcalos para excluirlos de esta importación.</>
+                            )}
                         </p>
 
                         <div className="max-h-96 overflow-y-auto space-y-2">
@@ -970,7 +823,7 @@ export default function Recibos({
                                     />
                                     <div className="w-24 shrink-0">
                                         <p className="text-[10px] text-ink-400 uppercase font-semibold">CUIL detectado</p>
-                                        <p className="text-xs font-mono text-ink-700">{g.cuil_formatted}</p>
+                                        <p className="text-xs font-mono text-ink-700">{g.cuil_formatted || 'sin CUIL'}</p>
                                     </div>
                                     <div className="flex-1">
                                         <select
@@ -1003,12 +856,16 @@ export default function Recibos({
                                             <p className="text-[9px] text-danger-600 font-semibold mt-0.5">⚠ No cierran</p>
                                         )}
                                     </div>
-                                    <div className="w-20 shrink-0 text-right">
+                                    <div className="w-24 shrink-0 text-right">
                                         <p className="text-[10px] text-ink-400 uppercase font-semibold">Páginas</p>
                                         <p className="text-xs text-ink-600 font-mono">{g.pages.join(', ')}</p>
-                                        {g.had_duplicate_copy && (
-                                            <p className="text-[9px] text-ink-400 mt-0.5" title="Se detectaron 2 copias del mismo recibo; se usó la copia con conformidad del empleado">
-                                                copia dupl. resuelta
+                                        {(g.employer_already_signed || g.employee_already_signed) && (
+                                            <p className="text-[9px] text-verify-700 mt-0.5" title="El PDF ya trae sello de firma del proceso anterior (Adobe/TCPDF) — no tiene validez criptográfica real, pero el circuito legacy ya se completó">
+                                                {g.employer_already_signed && g.employee_already_signed
+                                                    ? '✓ ya firmado (ambos)'
+                                                    : g.employer_already_signed
+                                                        ? '✓ ya firmado (empresa)'
+                                                        : '✓ ya firmado (empleado)'}
                                             </p>
                                         )}
                                     </div>

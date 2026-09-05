@@ -15,10 +15,16 @@ use Smalot\PdfParser\Parser;
  * del empleado (fila "APELLIDO, NOMBRE  LEGAJO  CUIL"). Se descarta el CUIT
  * propio de la empresa (config `newharvest.default_cuit`) y se toma el resto
  * como el CUIL del empleado. Se agrupan todas las páginas que comparten el
- * mismo CUIL — esto cubre tanto el caso de un recibo por página como el caso
- * de "original + duplicado" (que suelen aparecer en mitades separadas del
- * documento, no adyacentes). También se extraen nombre, legajo del
- * liquidador y los 3 montos (bruto/deducciones/neto) impresos en cada recibo.
+ * mismo CUIL.
+ *
+ * Sobre las copias duplicadas: el liquidador imprime 2 copias por persona
+ * — una con la leyenda "Recibí el importe..." (conformidad del EMPLEADO) y
+ * otra con "FIRMA EMPLEADOR" (autorización del APODERADO). No son
+ * redundantes: cada una es evidencia de una firma distinta. Ambas se
+ * conservan en el PDF final. Se detecta además si cada copia ya trae un
+ * sello de firma (texto/imagen del proceso viejo vía Adobe/TCPDF — sin
+ * validez criptográfica real, son overlays visuales) para no pedirle al
+ * chofer que vuelva a firmar algo que el proceso anterior ya cerró.
  */
 class SalaryReceiptPdfSplitter
 {
@@ -36,6 +42,12 @@ class SalaryReceiptPdfSplitter
      * que RRHH pueda comparar contra lo que el sistema matcheó.
      * No modifica ni crea nada — es un "dry run" para revisión manual.
      *
+     * Si no se detecta ningún CUIL en todo el documento (formato distinto,
+     * PDF escaneado como imagen, etc.), devuelve un único grupo con todas
+     * las páginas del archivo y sin empleado asignado, para que RRHH lo
+     * asigne manualmente — esto cubre tanto la subida de un PDF masivo
+     * como la de un recibo individual suelto con el mismo flujo.
+     *
      * @return array{groups: array, suggested_period: ?string, total_pages: int}
      */
     public function analyze(string $absolutePath): array
@@ -51,9 +63,10 @@ class SalaryReceiptPdfSplitter
             ->get(['id', 'first_name', 'last_name', 'cuil'])
             ->keyBy(fn ($e) => preg_replace('/\D/', '', $e->cuil));
 
-        $pagesByCuil = [];      // cuilDigits => [pageNumbers...]
-        $acknowledgedPagesByCuil = []; // cuilDigits => [pageNumbers con "Recibí el importe..."]
-        $rawDataByCuil = [];    // cuilDigits => datos crudos extraídos (última página gana si difiere)
+        $pagesByCuil = [];        // cuilDigits => [pageNumbers...]
+        $employeeSignedByCuil = []; // cuilDigits => true si alguna página trae el sello de conformidad del empleado
+        $employerSignedByCuil = []; // cuilDigits => true si alguna página trae el sello de firma del empleador
+        $rawDataByCuil = [];       // cuilDigits => datos crudos extraídos (última página gana si difiere)
         $suggestedPeriod = null;
 
         foreach ($pages as $index => $page) {
@@ -64,12 +77,16 @@ class SalaryReceiptPdfSplitter
             if ($cuilDigits) {
                 $pagesByCuil[$cuilDigits][] = $pageNumber;
 
-                // Algunos liquidadores incluyen 2 copias por persona: la copia
-                // de archivo del empleador (firma en blanco) y la copia del
-                // empleado, que trae la leyenda de conformidad. Preferimos
-                // esta última como el documento final que va a firmar el chofer.
-                if (preg_match('/Recib[ií]\s+el\s+importe/ui', $text)) {
-                    $acknowledgedPagesByCuil[$cuilDigits][] = $pageNumber;
+                // Copia del empleado: leyenda de conformidad + sello de firma.
+                if (preg_match('/Recib[ií]\s+el\s+importe/ui', $text)
+                    && preg_match('/firmado\s+digitalmente/ui', $text)) {
+                    $employeeSignedByCuil[$cuilDigits] = true;
+                }
+
+                // Copia del empleador: "FIRMA EMPLEADOR" + sello de firma real (no la línea de puntos en blanco).
+                if (preg_match('/FIRMA\s+EMPLEADOR/ui', $text)
+                    && preg_match('/firmado\s+digitalmente/ui', $text)) {
+                    $employerSignedByCuil[$cuilDigits] = true;
                 }
 
                 $detectedName    = $this->detectName($text);
@@ -100,46 +117,67 @@ class SalaryReceiptPdfSplitter
             $gross = $amounts['gross'] ?? 0;
             $deductions = $amounts['deductions'] ?? 0;
             $net = $amounts['net'] ?? 0;
-            // Los recibos reales pueden traer redondeos de centavos — margen de tolerancia chico.
-            // El recibo real es: neto = bruto + no_remunerativo - deducciones.
-            // No extraemos el "no remunerativo" por separado (está repartido
-            // en varias líneas de conceptos sin una posición fija en el
-            // texto), así que lo derivamos: si es negativo o mayor que el
-            // bruto entero, es una señal real de error de lectura. Si es un
-            // valor positivo razonable, es simplemente el no remunerativo
-            // normal del recibo — no hay nada sospechoso.
+
+            // neto = bruto + no_remunerativo - deducciones. No extraemos el no
+            // remunerativo por separado (está repartido en varias líneas sin
+            // posición fija en el texto), así que lo derivamos: si es negativo
+            // o mayor que el bruto entero, es una señal real de error de
+            // lectura. Un valor positivo razonable es el no remunerativo
+            // normal del recibo — no hay nada sospechoso en ese caso.
             $impliedNonRemunerative = $net - $gross + $deductions;
             $amountsSuspicious = $amounts !== null
                 && ($impliedNonRemunerative < -0.05 || $impliedNonRemunerative > $gross + 0.05);
 
-            // Si detectamos la página con la leyenda de conformidad del empleado,
-            // el PDF final usa SOLO esa (evita duplicar el mismo recibo 2 veces
-            // en el documento que va a firmar el chofer). Si no se detectó
-            // ninguna, se conservan todas las páginas encontradas por las dudas
-            // — preferimos mostrar de más antes que perder información.
-            $preferredPages = $acknowledgedPagesByCuil[$cuilDigits] ?? $pageNumbers;
-            $hadDuplicates = count($pageNumbers) > count($preferredPages);
-
             $groups[] = [
-                'cuil_detected'      => $cuilDigits,
-                'cuil_formatted'     => $this->formatCuil($cuilDigits),
-                'pages'              => $preferredPages,
-                'all_detected_pages' => $pageNumbers,
-                'page_count'         => count($preferredPages),
-                'had_duplicate_copy' => $hadDuplicates,
-                'employee_id'        => $employee?->id,
-                'employee_name'      => $employee ? "{$employee->last_name}, {$employee->first_name}" : null,
-                'matched'            => (bool) $employee,
+                'cuil_detected'          => $cuilDigits,
+                'cuil_formatted'         => $this->formatCuil($cuilDigits),
+                'pages'                  => $pageNumbers, // se conservan TODAS las páginas — cada copia es evidencia de una firma distinta
+                'page_count'             => count($pageNumbers),
+                'employee_id'            => $employee?->id,
+                'employee_name'          => $employee ? "{$employee->last_name}, {$employee->first_name}" : null,
+                'matched'                => (bool) $employee,
                 // Datos crudos leídos del PDF, útiles cuando no matchea a nadie
                 // (para que RRHH sepa a quién corresponde y decida manualmente).
-                'detected_name'      => $raw['name'] ?? null,
-                'detected_legajo'    => $raw['legajo'] ?? null,
-                'gross_amount'       => $gross,
-                'deductions_amount'  => $deductions,
-                'net_amount'         => $net,
+                'detected_name'          => $raw['name'] ?? null,
+                'detected_legajo'        => $raw['legajo'] ?? null,
+                'gross_amount'           => $gross,
+                'deductions_amount'      => $deductions,
+                'net_amount'             => $net,
                 'implied_non_remunerative' => round($impliedNonRemunerative, 2),
-                'amounts_detected'   => $amounts !== null,
-                'amounts_suspicious' => $amountsSuspicious,
+                'amounts_detected'       => $amounts !== null,
+                'amounts_suspicious'     => $amountsSuspicious,
+                // Evidencia de firma ya estampada por el proceso viejo (Adobe/TCPDF,
+                // solo sello visual, no firma criptográfica verificable — ver nota
+                // en el docblock de la clase). Si viene con ambas, no tiene sentido
+                // pedirle al chofer que vuelva a firmar en newHarvest.
+                'employee_already_signed' => $employeeSignedByCuil[$cuilDigits] ?? false,
+                'employer_already_signed' => $employerSignedByCuil[$cuilDigits] ?? false,
+            ];
+        }
+
+        // Si no se detectó ningún CUIL en todo el documento, lo tratamos como
+        // un único recibo suelto (subida individual) pendiente de asignación
+        // manual — mismo flujo de revisión, sin exigir que tenga el formato
+        // exacto del liquidador conocido.
+        if (empty($groups)) {
+            $groups[] = [
+                'cuil_detected'            => null,
+                'cuil_formatted'           => null,
+                'pages'                    => range(1, count($pages)),
+                'page_count'               => count($pages),
+                'employee_id'              => null,
+                'employee_name'            => null,
+                'matched'                  => false,
+                'detected_name'            => null,
+                'detected_legajo'          => null,
+                'gross_amount'             => 0,
+                'deductions_amount'        => 0,
+                'net_amount'               => 0,
+                'implied_non_remunerative' => 0,
+                'amounts_detected'         => false,
+                'amounts_suspicious'       => false,
+                'employee_already_signed'  => false,
+                'employer_already_signed'  => false,
             ];
         }
 

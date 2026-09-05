@@ -123,35 +123,12 @@ class SalaryReceiptController extends Controller
     }
 
     /**
-     * Importar un PDF de recibo ya generado externamente (YAM u otro sistema).
-     * El archivo se guarda en storage/app/public/receipts/ y queda asociado
-     * al empleado y período indicados. No requiere conceptos — el documento
-     * ya viene armado y firmado por fuera.
+     * import() eliminado — unificado bajo analyzeBulk()/confirmBulk(), que
+     * ahora manejan tanto el PDF masivo con todos los empleados como la
+     * subida de un recibo suelto (cuando no se detecta ningún CUIL en el
+     * documento, se trata como un único grupo pendiente de asignación
+     * manual). Ver SalaryReceiptPdfSplitter::analyze().
      */
-    public function import(Request $request)
-    {
-        $validated = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'period'      => ['required', 'string', 'max:50'],
-            'pdf'         => ['required', 'file', 'mimes:pdf', 'max:10240'], // máx 10 MB
-        ]);
-
-        $file = $request->file('pdf');
-        $path = $file->store('receipts', 'public');
-
-        $receipt = SalaryReceipt::create([
-            'employee_id'      => $validated['employee_id'],
-            'period'           => $validated['period'],
-            'gross_amount'     => 0,
-            'deductions_amount'=> 0,
-            'net_amount'       => 0,
-            'file_path'        => $path,
-            'status'           => 'generado',
-            'borrado'          => false,
-        ]);
-
-        return redirect()->back()->with('message', "Recibo #{$receipt->id} importado correctamente.");
-    }
 
     /**
      * Paso 1 de la importación masiva: recibe UN PDF con todos los recibos
@@ -186,15 +163,17 @@ class SalaryReceiptController extends Controller
     public function confirmBulk(Request $request, SalaryReceiptPdfSplitter $splitter)
     {
         $validated = $request->validate([
-            'temp_token'                   => ['required', 'string'],
-            'period'                       => ['required', 'string', 'max:50'],
-            'groups'                       => ['required', 'array', 'min:1'],
-            'groups.*.employee_id'         => ['required', 'exists:employees,id'],
-            'groups.*.pages'               => ['required', 'array', 'min:1'],
-            'groups.*.pages.*'             => ['required', 'integer', 'min:1'],
-            'groups.*.gross_amount'        => ['nullable', 'numeric', 'min:0'],
-            'groups.*.deductions_amount'   => ['nullable', 'numeric', 'min:0'],
-            'groups.*.net_amount'          => ['nullable', 'numeric', 'min:0'],
+            'temp_token'                     => ['required', 'string'],
+            'period'                         => ['required', 'string', 'max:50'],
+            'groups'                         => ['required', 'array', 'min:1'],
+            'groups.*.employee_id'           => ['required', 'exists:employees,id'],
+            'groups.*.pages'                 => ['required', 'array', 'min:1'],
+            'groups.*.pages.*'               => ['required', 'integer', 'min:1'],
+            'groups.*.gross_amount'          => ['nullable', 'numeric', 'min:0'],
+            'groups.*.deductions_amount'     => ['nullable', 'numeric', 'min:0'],
+            'groups.*.net_amount'            => ['nullable', 'numeric', 'min:0'],
+            'groups.*.employee_already_signed' => ['nullable', 'boolean'],
+            'groups.*.employer_already_signed' => ['nullable', 'boolean'],
         ]);
 
         if (! Storage::disk('local')->exists($validated['temp_token'])) {
@@ -203,21 +182,43 @@ class SalaryReceiptController extends Controller
 
         $sourcePath = Storage::disk('local')->path($validated['temp_token']);
         $created = 0;
+        $user = $request->user();
+        $now = now();
 
         foreach ($validated['groups'] as $group) {
             $fileName = 'receipts/' . uniqid('bulk_', true) . '.pdf';
             $destPath = Storage::disk('public')->path($fileName);
             $splitter->extractPages($sourcePath, $group['pages'], $destPath);
 
+            $employerSigned = $group['employer_already_signed'] ?? false;
+            $employeeSigned = $group['employee_already_signed'] ?? false;
+
+            // El PDF histórico ya trae el sello de ambas partes (proceso viejo
+            // vía Adobe/TCPDF — sin firma criptográfica real, ver nota en
+            // SalaryReceiptPdfSplitter). No tiene sentido pedirle al chofer
+            // que vuelva a firmar en newHarvest algo que el proceso anterior
+            // ya cerró, así que el recibo entra directo con el estado que
+            // corresponda según lo detectado.
+            $status = 'generado';
+            if ($employerSigned && $employeeSigned) {
+                $status = 'firmado_empleado';
+            } elseif ($employerSigned) {
+                $status = 'firmado_empresa';
+            }
+
             SalaryReceipt::create([
-                'employee_id'       => $group['employee_id'],
-                'period'            => $validated['period'],
-                'gross_amount'      => $group['gross_amount'] ?? 0,
-                'deductions_amount' => $group['deductions_amount'] ?? 0,
-                'net_amount'        => $group['net_amount'] ?? 0,
-                'file_path'         => $fileName,
-                'status'            => 'generado',
-                'borrado'           => false,
+                'employee_id'             => $group['employee_id'],
+                'period'                  => $validated['period'],
+                'gross_amount'            => $group['gross_amount'] ?? 0,
+                'deductions_amount'       => $group['deductions_amount'] ?? 0,
+                'net_amount'              => $group['net_amount'] ?? 0,
+                'file_path'               => $fileName,
+                'status'                  => $status,
+                'employer_signed_at'      => $employerSigned ? $now : null,
+                'employer_signature_path' => $employerSigned ? 'historico_pdf' : null,
+                'employee_signed_at'      => $employeeSigned ? $now : null,
+                'legal_accepted'          => $employeeSigned,
+                'borrado'                 => false,
             ]);
             $created++;
         }
