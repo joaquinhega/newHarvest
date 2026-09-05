@@ -81,6 +81,7 @@ export default function Recibos({
     const [bulkGroups, setBulkGroups] = useState([]);
     const [bulkPeriod, setBulkPeriod] = useState('');
     const [bulkError, setBulkError] = useState('');
+    const [bulkReviewed, setBulkReviewed] = useState(false);
     const bulkFileInputRef = useRef(null);
 
     // Navegación por período (línea de tiempo)
@@ -241,6 +242,7 @@ export default function Recibos({
         setBulkGroups([]);
         setBulkPeriod('');
         setBulkError('');
+        setBulkReviewed(false);
     };
 
     const handleBulkFileSelected = (e) => {
@@ -869,7 +871,7 @@ export default function Recibos({
                                 </Button>
                             )}
                             {bulkStep === 'review' && (
-                                <Button onClick={handleBulkConfirm}>
+                                <Button disabled={!bulkReviewed} onClick={handleBulkConfirm}>
                                     <Upload className="w-4 h-4" />
                                     Confirmar e importar ({bulkGroups.filter(g => g.include).length})
                                 </Button>
@@ -914,6 +916,16 @@ export default function Recibos({
 
                 {bulkStep === 'review' && (
                     <div className="space-y-4">
+                        {/* Advertencia: proceso automático, requiere revisión humana */}
+                        <div className="flex items-start gap-2.5 bg-pending-50 border border-pending-200 rounded-xl px-4 py-3">
+                            <span className="text-pending-700 text-sm shrink-0">⚠</span>
+                            <p className="text-xs text-pending-800 leading-relaxed">
+                                Este proceso lee el PDF automáticamente y puede cometer errores — nombres mal leídos,
+                                montos incorrectos o personas no identificadas. <strong>Revisá cada recibo uno por uno</strong> antes
+                                de confirmar, especialmente los que no matchearon un empleado o tienen montos marcados como sospechosos.
+                            </p>
+                        </div>
+
                         {/* Período del lote */}
                         <div className="flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-xl px-4 py-3">
                             <span className="text-xs font-semibold text-brand-800 shrink-0">Período de estos recibos:</span>
@@ -987,14 +999,36 @@ export default function Recibos({
                                         <p className="text-xs text-ink-700 font-mono">
                                             {g.net_amount ? `$ ${Number(g.net_amount).toLocaleString('es-AR')}` : '—'}
                                         </p>
+                                        {g.amounts_suspicious && (
+                                            <p className="text-[9px] text-danger-600 font-semibold mt-0.5">⚠ No cierran</p>
+                                        )}
                                     </div>
                                     <div className="w-20 shrink-0 text-right">
                                         <p className="text-[10px] text-ink-400 uppercase font-semibold">Páginas</p>
                                         <p className="text-xs text-ink-600 font-mono">{g.pages.join(', ')}</p>
+                                        {g.had_duplicate_copy && (
+                                            <p className="text-[9px] text-ink-400 mt-0.5" title="Se detectaron 2 copias del mismo recibo; se usó la copia con conformidad del empleado">
+                                                copia dupl. resuelta
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Checklist obligatorio antes de poder confirmar */}
+                        <label className="flex items-start gap-2.5 bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={bulkReviewed}
+                                onChange={e => setBulkReviewed(e.target.checked)}
+                                className="mt-0.5 rounded border-ink-300 accent-brand-600 cursor-pointer shrink-0"
+                            />
+                            <span className="text-xs text-ink-700">
+                                Revisé cada recibo detectado arriba — los empleados, montos y períodos son correctos.
+                                Entiendo que el sistema puede cometer errores de lectura.
+                            </span>
+                        </label>
                     </div>
                 )}
             </Modal>

@@ -52,6 +52,7 @@ class SalaryReceiptPdfSplitter
             ->keyBy(fn ($e) => preg_replace('/\D/', '', $e->cuil));
 
         $pagesByCuil = [];      // cuilDigits => [pageNumbers...]
+        $acknowledgedPagesByCuil = []; // cuilDigits => [pageNumbers con "Recibí el importe..."]
         $rawDataByCuil = [];    // cuilDigits => datos crudos extraídos (última página gana si difiere)
         $suggestedPeriod = null;
 
@@ -62,6 +63,14 @@ class SalaryReceiptPdfSplitter
             $cuilDigits = $this->detectEmployeeCuil($text, $ownCuitDigits);
             if ($cuilDigits) {
                 $pagesByCuil[$cuilDigits][] = $pageNumber;
+
+                // Algunos liquidadores incluyen 2 copias por persona: la copia
+                // de archivo del empleador (firma en blanco) y la copia del
+                // empleado, que trae la leyenda de conformidad. Preferimos
+                // esta última como el documento final que va a firmar el chofer.
+                if (preg_match('/Recib[ií]\s+el\s+importe/ui', $text)) {
+                    $acknowledgedPagesByCuil[$cuilDigits][] = $pageNumber;
+                }
 
                 $detectedName    = $this->detectName($text);
                 $detectedLegajo  = $this->detectLegajo($text);
@@ -88,21 +97,39 @@ class SalaryReceiptPdfSplitter
             $raw = $rawDataByCuil[$cuilDigits] ?? [];
             $amounts = $raw['amounts'] ?? null;
 
+            $gross = $amounts['gross'] ?? 0;
+            $deductions = $amounts['deductions'] ?? 0;
+            $net = $amounts['net'] ?? 0;
+            // Los recibos reales pueden traer redondeos de centavos — margen de tolerancia chico.
+            $amountsSuspicious = $amounts !== null && abs(($gross - $deductions) - $net) > 0.05;
+
+            // Si detectamos la página con la leyenda de conformidad del empleado,
+            // el PDF final usa SOLO esa (evita duplicar el mismo recibo 2 veces
+            // en el documento que va a firmar el chofer). Si no se detectó
+            // ninguna, se conservan todas las páginas encontradas por las dudas
+            // — preferimos mostrar de más antes que perder información.
+            $preferredPages = $acknowledgedPagesByCuil[$cuilDigits] ?? $pageNumbers;
+            $hadDuplicates = count($pageNumbers) > count($preferredPages);
+
             $groups[] = [
-                'cuil_detected'     => $cuilDigits,
-                'cuil_formatted'    => $this->formatCuil($cuilDigits),
-                'pages'             => $pageNumbers,
-                'page_count'        => count($pageNumbers),
-                'employee_id'       => $employee?->id,
-                'employee_name'     => $employee ? "{$employee->last_name}, {$employee->first_name}" : null,
-                'matched'           => (bool) $employee,
+                'cuil_detected'      => $cuilDigits,
+                'cuil_formatted'     => $this->formatCuil($cuilDigits),
+                'pages'              => $preferredPages,
+                'all_detected_pages' => $pageNumbers,
+                'page_count'         => count($preferredPages),
+                'had_duplicate_copy' => $hadDuplicates,
+                'employee_id'        => $employee?->id,
+                'employee_name'      => $employee ? "{$employee->last_name}, {$employee->first_name}" : null,
+                'matched'            => (bool) $employee,
                 // Datos crudos leídos del PDF, útiles cuando no matchea a nadie
                 // (para que RRHH sepa a quién corresponde y decida manualmente).
-                'detected_name'     => $raw['name'] ?? null,
-                'detected_legajo'   => $raw['legajo'] ?? null,
-                'gross_amount'      => $amounts['gross'] ?? 0,
-                'deductions_amount' => $amounts['deductions'] ?? 0,
-                'net_amount'        => $amounts['net'] ?? 0,
+                'detected_name'      => $raw['name'] ?? null,
+                'detected_legajo'    => $raw['legajo'] ?? null,
+                'gross_amount'       => $gross,
+                'deductions_amount'  => $deductions,
+                'net_amount'         => $net,
+                'amounts_detected'   => $amounts !== null,
+                'amounts_suspicious' => $amountsSuspicious,
             ];
         }
 
