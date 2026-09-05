@@ -101,7 +101,16 @@ class SalaryReceiptPdfSplitter
             $deductions = $amounts['deductions'] ?? 0;
             $net = $amounts['net'] ?? 0;
             // Los recibos reales pueden traer redondeos de centavos — margen de tolerancia chico.
-            $amountsSuspicious = $amounts !== null && abs(($gross - $deductions) - $net) > 0.05;
+            // El recibo real es: neto = bruto + no_remunerativo - deducciones.
+            // No extraemos el "no remunerativo" por separado (está repartido
+            // en varias líneas de conceptos sin una posición fija en el
+            // texto), así que lo derivamos: si es negativo o mayor que el
+            // bruto entero, es una señal real de error de lectura. Si es un
+            // valor positivo razonable, es simplemente el no remunerativo
+            // normal del recibo — no hay nada sospechoso.
+            $impliedNonRemunerative = $net - $gross + $deductions;
+            $amountsSuspicious = $amounts !== null
+                && ($impliedNonRemunerative < -0.05 || $impliedNonRemunerative > $gross + 0.05);
 
             // Si detectamos la página con la leyenda de conformidad del empleado,
             // el PDF final usa SOLO esa (evita duplicar el mismo recibo 2 veces
@@ -128,6 +137,7 @@ class SalaryReceiptPdfSplitter
                 'gross_amount'       => $gross,
                 'deductions_amount'  => $deductions,
                 'net_amount'         => $net,
+                'implied_non_remunerative' => round($impliedNonRemunerative, 2),
                 'amounts_detected'   => $amounts !== null,
                 'amounts_suspicious' => $amountsSuspicious,
             ];
