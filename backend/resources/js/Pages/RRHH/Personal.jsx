@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Button from '@/Components/UI/Button';
@@ -6,6 +6,7 @@ import Input from '@/Components/UI/Input';
 import Badge from '@/Components/UI/Badge';
 import Modal from '@/Components/UI/Modal';
 import Table from '@/Components/UI/Table';
+import { cn } from '@/Utils/cn';
 import { 
     Plus, 
     Eye, 
@@ -17,8 +18,127 @@ import {
     MapPin, 
     Calendar, 
     FileSpreadsheet, 
-    CreditCard 
+    CreditCard,
+    UserCog,
+    KeyRound,
+    RotateCcw,
 } from 'lucide-react';
+
+// Extrae el DNI de un CUIL (20-43942223-9 -> "43942223"), igual que el
+// backend. La contraseña inicial es siempre este valor.
+const extractDni = (cuil) => {
+    if (!cuil) return null;
+    const match = String(cuil).trim().match(/^\d{2}-?(\d{7,8})-?\d$/);
+    return match ? match[1] : null;
+};
+
+// Switch de "Dar acceso al sistema" — reutilizado en Alta y Edición.
+function ToggleRow({ label, description, checked, onChange }) {
+    return (
+        <div className="flex items-center justify-between gap-4">
+            <div>
+                <p className="text-sm font-semibold text-ink-950">{label}</p>
+                {description && <p className="text-[11px] text-ink-500 mt-0.5">{description}</p>}
+            </div>
+            <button
+                type="button"
+                role="switch"
+                aria-checked={checked}
+                onClick={() => onChange(!checked)}
+                className={cn(
+                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+                    checked ? 'bg-brand-600' : 'bg-ink-300'
+                )}
+            >
+                <span
+                    className={cn(
+                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                        checked ? 'translate-x-6' : 'translate-x-1'
+                    )}
+                />
+            </button>
+        </div>
+    );
+}
+
+// Bloque "Acceso al sistema": rol, usuario (autosugerido) y letra (choferes).
+// excludeUserId evita que el autosugerido choque contra el propio usuario
+// cuando se está editando un legajo que ya tenía acceso.
+function AccessFields({ data, errors, setData, excludeUserId = null }) {
+    useEffect(() => {
+        if (!data.grant_access || !data.first_name || !data.last_name) return undefined;
+
+        const timer = setTimeout(() => {
+            window.axios
+                .get('/rrhh/personal/suggest-credentials', {
+                    params: {
+                        first_name: data.first_name,
+                        last_name: data.last_name,
+                        role: data.role || undefined,
+                        exclude_user_id: excludeUserId || undefined,
+                        current_letter: data.letter || undefined,
+                    },
+                })
+                .then(({ data: suggestion }) => {
+                    if (!data.username) setData('username', suggestion.username);
+                    if (data.role === 'chofer' && !data.letter && suggestion.letter) {
+                        setData('letter', suggestion.letter);
+                    }
+                })
+                .catch(() => {});
+        }, 400);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.grant_access, data.first_name, data.last_name, data.role]);
+
+    if (!data.grant_access) return null;
+
+    return (
+        <div className="space-y-3 bg-brand-50/50 border border-brand-100 rounded-2xl p-3.5">
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-ink-700 mb-1.5">
+                        Rol
+                    </label>
+                    <select
+                        value={data.role}
+                        onChange={(e) => setData('role', e.target.value)}
+                        className="w-full bg-white border border-ink-100 rounded-xl px-3.5 py-2.5 text-sm text-ink-950 focus:outline-none focus:border-brand-500 transition-colors"
+                    >
+                        <option value="">Seleccionar…</option>
+                        <option value="chofer">Chofer (app mobile)</option>
+                        <option value="rrhh">RRHH (backoffice web)</option>
+                    </select>
+                    {errors.role && (
+                        <p className="text-danger-700 text-xs mt-1.5 font-medium">{errors.role}</p>
+                    )}
+                </div>
+                <Input
+                    label="Usuario"
+                    icon={UserCog}
+                    value={data.username}
+                    onChange={(e) => setData('username', e.target.value.toLowerCase())}
+                    error={errors.username}
+                />
+            </div>
+
+            {data.role === 'chofer' && (
+                <Input
+                    label="Letra"
+                    icon={KeyRound}
+                    value={data.letter}
+                    onChange={(e) => setData('letter', e.target.value.toUpperCase().slice(0, 1))}
+                    error={errors.letter}
+                />
+            )}
+
+            <p className="text-[11px] text-ink-500 leading-relaxed">
+                La contraseña inicial va a ser el <strong>DNI</strong> (el que figura en el CUIL de arriba).
+            </p>
+        </div>
+    );
+}
 
 export default function Personal({ personal = [], filters = {} }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -26,6 +146,8 @@ export default function Personal({ personal = [], filters = {} }) {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
+    const [generatedCredentials, setGeneratedCredentials] = useState(null);
 
     // Formulario de Alta
     const createForm = useForm({
@@ -38,6 +160,10 @@ export default function Personal({ personal = [], filters = {} }) {
         phone: '',
         address: '',
         status: 'activo',
+        grant_access: false,
+        role: '',
+        username: '',
+        letter: '',
     });
 
     // Formulario de Edición
@@ -51,6 +177,10 @@ export default function Personal({ personal = [], filters = {} }) {
         phone: '',
         address: '',
         status: 'activo',
+        grant_access: false,
+        role: '',
+        username: '',
+        letter: '',
     });
 
     // Filtrado reactivo en el cliente
@@ -79,8 +209,14 @@ export default function Personal({ personal = [], filters = {} }) {
     // Procesar alta
     const handleCreateSubmit = (e) => {
         e.preventDefault();
+        const { grant_access: grantedAccess, username, cuil } = createForm.data;
+
         createForm.post('/rrhh/personal', {
             onSuccess: () => {
+                if (grantedAccess) {
+                    setGeneratedCredentials({ username, dni: extractDni(cuil) });
+                    setIsCredentialsOpen(true);
+                }
                 createForm.reset();
                 setIsCreateOpen(false);
             },
@@ -100,6 +236,10 @@ export default function Personal({ personal = [], filters = {} }) {
             phone: emp.telefono === '—' ? '' : emp.telefono,
             address: emp.direccion === '—' ? '' : emp.direccion,
             status: emp.status,
+            grant_access: emp.tiene_acceso,
+            role: emp.rol || '',
+            username: emp.usuario || '',
+            letter: emp.letra || '',
         });
         setIsEditOpen(true);
     };
@@ -107,10 +247,32 @@ export default function Personal({ personal = [], filters = {} }) {
     // Procesar modificación
     const handleEditSubmit = (e) => {
         e.preventDefault();
+        const hadAccessBefore = selectedEmployee.tiene_acceso;
+        const { grant_access: grantedAccess, username, cuil } = editForm.data;
+
         editForm.put(`/rrhh/personal/${selectedEmployee.id}`, {
             onSuccess: () => {
+                // Solo mostramos las credenciales si el acceso se acaba de
+                // otorgar en esta edición (si ya lo tenía, no cambió nada).
+                if (grantedAccess && !hadAccessBefore) {
+                    setGeneratedCredentials({ username, dni: extractDni(cuil) });
+                    setIsCredentialsOpen(true);
+                }
                 setIsEditOpen(false);
                 setSelectedEmployee(null);
+            },
+        });
+    };
+
+    // Restablecer contraseña al DNI
+    const handleResetPassword = (emp) => {
+        if (!confirm(`¿Restablecer la contraseña de ${emp.nombre_completo} a su DNI?`)) return;
+
+        router.post(`/rrhh/personal/${emp.id}/reset-password`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setGeneratedCredentials({ username: emp.usuario, dni: extractDni(emp.cuil) });
+                setIsCredentialsOpen(true);
             },
         });
     };
@@ -135,8 +297,20 @@ export default function Personal({ personal = [], filters = {} }) {
         'Puesto',
         'Antigüedad',
         'Estado',
+        'Acceso',
         { label: 'Acciones', className: 'text-right' },
     ];
+
+    // Etiqueta + variante de badge para la columna Acceso
+    const getAccesoBadge = (emp) => {
+        if (!emp.tiene_acceso) {
+            return { variant: 'neutral', label: 'Sin acceso' };
+        }
+        if (emp.rol === 'chofer') {
+            return { variant: 'brand', label: emp.letra ? `Chofer · ${emp.letra}` : 'Chofer' };
+        }
+        return { variant: 'success', label: 'RRHH' };
+    };
 
     return (
         <AuthenticatedLayout
@@ -221,6 +395,13 @@ export default function Personal({ personal = [], filters = {} }) {
                             <td className="px-5 py-3.5">
                                 <Badge variant={emp.status === 'activo' ? 'Activa' : 'Inactiva'}>
                                     {emp.status}
+                                </Badge>
+                            </td>
+
+                            {/* Acceso al sistema */}
+                            <td className="px-5 py-3.5">
+                                <Badge variant={getAccesoBadge(emp).variant}>
+                                    {getAccesoBadge(emp).label}
                                 </Badge>
                             </td>
 
@@ -376,6 +557,20 @@ export default function Personal({ personal = [], filters = {} }) {
                         icon={MapPin}
                         error={createForm.errors.address}
                     />
+
+                    <div className="border-t border-ink-100 pt-4 space-y-3">
+                        <ToggleRow
+                            label="Dar acceso al sistema"
+                            description="Genera usuario y contraseña para ingresar por mobile o backoffice."
+                            checked={createForm.data.grant_access}
+                            onChange={(value) => createForm.setData('grant_access', value)}
+                        />
+                        <AccessFields
+                            data={createForm.data}
+                            errors={createForm.errors}
+                            setData={createForm.setData}
+                        />
+                    </div>
                 </form>
             </Modal>
 
@@ -495,6 +690,21 @@ export default function Personal({ personal = [], filters = {} }) {
                         icon={MapPin}
                         error={editForm.errors.address}
                     />
+
+                    <div className="border-t border-ink-100 pt-4 space-y-3">
+                        <ToggleRow
+                            label="Dar acceso al sistema"
+                            description="Genera usuario y contraseña para ingresar por mobile o backoffice."
+                            checked={editForm.data.grant_access}
+                            onChange={(value) => editForm.setData('grant_access', value)}
+                        />
+                        <AccessFields
+                            data={editForm.data}
+                            errors={editForm.errors}
+                            setData={editForm.setData}
+                            excludeUserId={selectedEmployee?.user_id}
+                        />
+                    </div>
                 </form>
             </Modal>
 
@@ -565,6 +775,68 @@ export default function Personal({ personal = [], filters = {} }) {
                                     {selectedEmployee.status}
                                 </Badge>
                             </div>
+                        </div>
+
+                        {/* Acceso al sistema */}
+                        <div className="bg-ink-50 p-4 rounded-2xl space-y-2.5 border border-ink-100 text-xs">
+                            <div className="flex justify-between py-1 items-center">
+                                <span className="text-ink-500 font-medium">Acceso al sistema:</span>
+                                <Badge variant={getAccesoBadge(selectedEmployee).variant}>
+                                    {getAccesoBadge(selectedEmployee).label}
+                                </Badge>
+                            </div>
+                            {selectedEmployee.usuario && (
+                                <>
+                                    <div className="flex justify-between py-1 border-t border-ink-100">
+                                        <span className="text-ink-500 font-medium">Usuario:</span>
+                                        <span className="font-mono font-semibold text-ink-950">
+                                            {selectedEmployee.usuario}
+                                        </span>
+                                    </div>
+                                    {selectedEmployee.tiene_acceso && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full mt-1"
+                                            onClick={() => handleResetPassword(selectedEmployee)}
+                                        >
+                                            <RotateCcw className="w-3.5 h-3.5" />
+                                            Restablecer contraseña (DNI)
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* MODAL: CREDENCIALES GENERADAS */}
+            <Modal
+                isOpen={isCredentialsOpen}
+                onClose={() => setIsCredentialsOpen(false)}
+                title="Acceso al sistema generado"
+                subtitle="Pasale estos datos al empleado para que pueda ingresar"
+                maxWidth="sm"
+                footer={
+                    <Button onClick={() => setIsCredentialsOpen(false)}>
+                        Listo
+                    </Button>
+                }
+            >
+                {generatedCredentials && (
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center bg-ink-50 rounded-xl px-4 py-3 border border-ink-100">
+                            <span className="text-ink-500 font-medium">Usuario</span>
+                            <span className="font-mono font-bold text-ink-950">
+                                {generatedCredentials.username}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-ink-50 rounded-xl px-4 py-3 border border-ink-100">
+                            <span className="text-ink-500 font-medium">Contraseña</span>
+                            <span className="font-mono font-bold text-ink-950">
+                                {generatedCredentials.dni ?? '—'}
+                            </span>
                         </div>
                     </div>
                 )}

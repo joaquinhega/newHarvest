@@ -53,9 +53,11 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
     Route::prefix('rrhh')->name('rrhh.')->group(function () {
         // Personal (Legajos)
         Route::get('/personal/export/excel', [PersonalController::class, 'exportExcel'])->name('personal.export.excel');
+        Route::get('/personal/suggest-credentials', [PersonalController::class, 'suggestCredentials'])->name('personal.suggest-credentials');
         Route::get('/personal', [PersonalController::class, 'index'])->name('personal');
         Route::post('/personal', [PersonalController::class, 'store'])->name('personal.store');
         Route::put('/personal/{id}', [PersonalController::class, 'update'])->name('personal.update');
+        Route::post('/personal/{id}/reset-password', [PersonalController::class, 'resetPassword'])->name('personal.reset-password');
         Route::delete('/personal/{id}', [PersonalController::class, 'destroy'])->name('personal.destroy');
 
         // Vacaciones y Certificados
