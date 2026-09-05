@@ -277,7 +277,7 @@
                 </td>
                 <td class="firma-col">
                     @if($firma_url)
-                        <img src="{{ $firma_url }}" class="signature-passenger-img" alt="Firma">
+                        <img src="{{ $firma_url }}" class="signature-passenger-img" alt="">
                     @else
                         <div class="signature-placeholder"></div>
                     @endif

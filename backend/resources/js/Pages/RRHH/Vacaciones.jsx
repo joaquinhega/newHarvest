@@ -20,7 +20,8 @@ import {
     CheckCircle2, 
     XCircle,
     User,
-    Stethoscope
+    Stethoscope,
+    FileDown
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -506,7 +507,14 @@ export default function Vacaciones({
                 maxWidth="lg"
                 footer={
                     <div className="flex items-center justify-between w-full">
-                        <div>
+                        <div className="flex items-center gap-2">
+                            <a
+                                href={`/rrhh/vacaciones/${selectedItem?.id}/pdf`}
+                                className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-950 bg-ink-100 hover:bg-ink-200 px-3.5 py-2 rounded-xl transition-colors font-semibold"
+                            >
+                                <FileDown className="w-4 h-4" />
+                                Descargar PDF
+                            </a>
                             {selectedItem?.status === 'pendiente' && (
                                 <div className="flex gap-2">
                                     <Button

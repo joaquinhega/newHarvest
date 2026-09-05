@@ -11,6 +11,8 @@ use App\Http\Controllers\CombustiblePdfController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\SanctionController;
+use App\Http\Controllers\SanctionPdfController;
+use App\Http\Controllers\LeaveRequestPdfController;
 use App\Http\Controllers\SalaryReceiptController;
 
 Route::get('/', function () {
@@ -58,6 +60,7 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
 
         // Vacaciones y Certificados
         Route::get('/vacaciones/export/excel', [LeaveRequestController::class, 'exportExcel'])->name('vacaciones.export.excel');
+        Route::get('/vacaciones/{id}/pdf', [LeaveRequestPdfController::class, 'generate'])->name('vacaciones.pdf');
         Route::get('/vacaciones', [LeaveRequestController::class, 'index'])->name('vacaciones');
         Route::post('/vacaciones', [LeaveRequestController::class, 'store'])->name('vacaciones.store');
         Route::patch('/vacaciones/{id}/aprobar', [LeaveRequestController::class, 'approve'])->name('vacaciones.approve');
@@ -77,6 +80,7 @@ Route::middleware(['auth', 'backoffice'])->group(function () {
 
         // Sanciones
         Route::get('/sanciones/export/excel', [SanctionController::class, 'exportExcel'])->name('sanciones.export.excel');
+        Route::get('/sanciones/{id}/pdf', [SanctionPdfController::class, 'generate'])->name('sanciones.pdf');
         Route::get('/sanciones', [SanctionController::class, 'index'])->name('sanciones');
         Route::post('/sanciones', [SanctionController::class, 'store'])->name('sanciones.store');
         Route::put('/sanciones/{id}', [SanctionController::class, 'update'])->name('sanciones.update');

@@ -39,7 +39,7 @@ class VoucherPdfController extends Controller
             'monto' => number_format((float)($voucher->amount ?: 0), 2, ',', '.'),
             'observaciones' => $voucher->observation ?: '',
             'firma' => $voucher->signature_path,
-            'firma_url' => $voucher->signature_path ? asset('storage/' . $voucher->signature_path) : null,
+            'firma_url' => $this->embedImage($voucher->signature_path),
             'status' => $voucher->status === 'aprobado' ? 'Aprobado' : 'Pendiente',
             'logo_empresa' => $voucher->company && $voucher->company->logo_blob
                 ? 'data:' . ($voucher->company->logo_mime ?: 'image/png') . ';base64,' . base64_encode($voucher->company->logo_blob)
@@ -53,5 +53,26 @@ class VoucherPdfController extends Controller
             ->setPaper('a4', 'landscape');
 
         return $pdf->download("Voucher_{$voucher->remito_code}.pdf");
+    }
+
+    /**
+     * Convierte un archivo de storage/public en un data URI base64, para que
+     * dompdf lo pueda renderizar siempre, sin depender de poder resolver
+     * URLs externas (asset()) ni de tener habilitado el fetch remoto.
+     */
+    private function embedImage(?string $relativePath): ?string
+    {
+        if (! $relativePath) {
+            return null;
+        }
+
+        $absolutePath = storage_path('app/public/' . $relativePath);
+        if (! file_exists($absolutePath)) {
+            return null;
+        }
+
+        $mime = mime_content_type($absolutePath) ?: 'image/png';
+
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($absolutePath));
     }
 }

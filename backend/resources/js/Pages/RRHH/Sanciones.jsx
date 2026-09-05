@@ -18,7 +18,8 @@ import {
     CheckCircle2, 
     Clock, 
     ShieldAlert, 
-    Printer 
+    Printer,
+    FileDown 
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -624,14 +625,13 @@ export default function Sanciones({
                 maxWidth="lg"
                 footer={
                     <div className="flex items-center justify-between w-full">
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
+                        <a
+                            href={`/rrhh/sanciones/${selectedSanction?.id}/pdf`}
                             className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-950 bg-ink-100 hover:bg-ink-200 px-3.5 py-2 rounded-xl transition-colors font-semibold"
                         >
-                            <Printer className="w-4 h-4" />
-                            Imprimir acta
-                        </button>
+                            <FileDown className="w-4 h-4" />
+                            Descargar PDF
+                        </a>
                         <Button
                             variant="ghost"
                             onClick={() => {
