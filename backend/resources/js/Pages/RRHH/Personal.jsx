@@ -79,7 +79,7 @@ export default function Personal({ personal = [], filters = {} }) {
     // Procesar alta
     const handleCreateSubmit = (e) => {
         e.preventDefault();
-        createForm.post(route('rrhh.personal.store'), {
+        createForm.post('/rrhh/personal', {
             onSuccess: () => {
                 createForm.reset();
                 setIsCreateOpen(false);
@@ -107,7 +107,7 @@ export default function Personal({ personal = [], filters = {} }) {
     // Procesar modificación
     const handleEditSubmit = (e) => {
         e.preventDefault();
-        editForm.put(route('rrhh.personal.update', selectedEmployee.id), {
+        editForm.put(`/rrhh/personal/${selectedEmployee.id}`, {
             onSuccess: () => {
                 setIsEditOpen(false);
                 setSelectedEmployee(null);
@@ -118,13 +118,14 @@ export default function Personal({ personal = [], filters = {} }) {
     // Procesar baja lógica
     const handleDelete = (emp) => {
         if (confirm(`¿Estás seguro de dar de baja el legajo de ${emp.nombre_completo}?`)) {
-            router.delete(route('rrhh.personal.destroy', emp.id));
+            router.delete(`/rrhh/personal/${emp.id}`);
         }
     };
 
     // Exportar CSV / Excel
     const handleExport = () => {
-        window.location.href = route('rrhh.personal.export.excel', { search: searchTerm });
+        const params = new URLSearchParams({ search: searchTerm });
+        window.location.href = `/rrhh/personal/export/excel?${params}`;
     };
 
     // Encabezados de tabla

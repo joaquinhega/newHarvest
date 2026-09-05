@@ -86,7 +86,7 @@ export default function Sanciones({
     // Procesar alta
     const handleCreateSubmit = (e) => {
         e.preventDefault();
-        createForm.post(route('rrhh.sanciones.store'), {
+        createForm.post('/rrhh/sanciones', {
             onSuccess: () => {
                 createForm.reset();
                 setIsCreateOpen(false);
@@ -111,7 +111,7 @@ export default function Sanciones({
     // Procesar edición
     const handleEditSubmit = (e) => {
         e.preventDefault();
-        editForm.put(route('rrhh.sanciones.update', selectedSanction.id), {
+        editForm.put(`/rrhh/sanciones/${selectedSanction.id}`, {
             onSuccess: () => {
                 setIsEditOpen(false);
                 setSelectedSanction(null);
@@ -122,17 +122,18 @@ export default function Sanciones({
     // Procesar baja lógica
     const handleDelete = (item) => {
         if (confirm(`¿Estás seguro de eliminar el registro disciplinario ${item.code} de ${item.nombre}?`)) {
-            router.delete(route('rrhh.sanciones.destroy', item.id));
+            router.delete(`/rrhh/sanciones/${item.id}`);
         }
     };
 
     // Exportar Excel
     const handleExport = () => {
-        window.location.href = route('rrhh.sanciones.export.excel', {
+        const params = new URLSearchParams({
             search: searchTerm,
             type: typeFilter,
             status: statusFilter,
         });
+        window.location.href = `/rrhh/sanciones/export/excel?${params}`;
     };
 
     // Encabezados de tabla

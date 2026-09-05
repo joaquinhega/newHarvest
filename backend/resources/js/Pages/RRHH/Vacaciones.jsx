@@ -96,7 +96,7 @@ export default function Vacaciones({
 
     // Procesar aprobación
     const handleApprove = (id) => {
-        router.patch(route('rrhh.vacaciones.approve', id), {}, {
+        router.patch(`/rrhh/vacaciones/${id}/aprobar`, {}, {
             preserveScroll: true,
             onSuccess: () => {
                 if (selectedItem?.id === id) setIsDetailOpen(false);
@@ -107,7 +107,7 @@ export default function Vacaciones({
     // Procesar rechazo
     const handleReject = (id) => {
         if (confirm('¿Estás seguro de rechazar esta solicitud de licencia?')) {
-            router.patch(route('rrhh.vacaciones.reject', id), {}, {
+            router.patch(`/rrhh/vacaciones/${id}/rechazar`, {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     if (selectedItem?.id === id) setIsDetailOpen(false);
@@ -119,7 +119,7 @@ export default function Vacaciones({
     // Enviar formulario de alta
     const handleCreateSubmit = (e) => {
         e.preventDefault();
-        createForm.post(route('rrhh.vacaciones.store'), {
+        createForm.post('/rrhh/vacaciones', {
             onSuccess: () => {
                 createForm.reset();
                 setIsCreateOpen(false);
@@ -129,11 +129,12 @@ export default function Vacaciones({
 
     // Exportar Excel
     const handleExport = () => {
-        window.location.href = route('rrhh.vacaciones.export.excel', {
+        const params = new URLSearchParams({
             search: searchTerm,
             status: statusFilter,
             type: typeFilter,
         });
+        window.location.href = `/rrhh/vacaciones/export/excel?${params}`;
     };
 
     // Encabezados de tabla
