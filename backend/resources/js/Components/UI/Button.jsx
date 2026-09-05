@@ -19,6 +19,7 @@ export default function Button({
         outline: "border border-brand-600 text-brand-600 hover:bg-brand-50 bg-transparent",
         export: "border border-brand-600 text-brand-600 hover:bg-brand-50 bg-white text-xs font-medium rounded-lg",
         verify: "bg-verify-700 hover:bg-verify-700/90 text-white",
+        warning: "bg-pending-700 hover:bg-pending-700/90 text-white",
         danger: "bg-danger-700 hover:bg-danger-700/90 text-white",
         ghost: "text-ink-700 hover:bg-ink-100 hover:text-ink-950 bg-transparent",
         icon: "w-8 h-8 rounded-lg text-ink-500 hover:text-brand-600 hover:bg-brand-50 p-0",

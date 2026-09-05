@@ -7,8 +7,10 @@ import Badge from '@/Components/UI/Badge';
 import Modal from '@/Components/UI/Modal';
 import Table from '@/Components/UI/Table';
 import { Plus, Eye, Pencil, Trash2, Search, Building2, ArrowRight } from 'lucide-react';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 export default function Empresas({ empresas = [] }) {
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
@@ -89,8 +91,14 @@ export default function Empresas({ empresas = [] }) {
     };
 
     // Procesar baja lÃ³gica
-    const handleDelete = (company) => {
-        if (confirm(`Â¿EstÃ¡s seguro de desactivar la empresa "${company.nombre}"?`)) {
+    const handleDelete = async (company) => {
+        const ok = await confirm({
+            title: '¿Desactivar esta empresa?',
+            description: `"${company.nombre}" dejará de estar disponible para asignar en nuevos vouchers.`,
+            variant: 'danger',
+            confirmLabel: 'Desactivar',
+        });
+        if (ok) {
             router.delete(`/empresas/${company.id}`);
         }
     };

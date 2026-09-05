@@ -22,8 +22,10 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 export default function Vouchers({ vouchers = [], companies = [], choferes = [], filters = {} }) {
+    const confirm = useConfirm();
     const currentStatus = filters.status || 'pendiente';
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedVoucher, setSelectedVoucher] = useState(null);
@@ -137,8 +139,14 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
         });
     };
 
-    const handleDisapprove = (voucher) => {
-        if (confirm(`¿Desaprobar el voucher #${voucher.remito_code} de ${voucher.pasajero}? Volverá a estado pendiente.`)) {
+    const handleDisapprove = async (voucher) => {
+        const ok = await confirm({
+            title: '¿Desaprobar este voucher?',
+            description: `El voucher #${voucher.remito_code} de ${voucher.pasajero} volverá a estado pendiente.`,
+            variant: 'warning',
+            confirmLabel: 'Desaprobar',
+        });
+        if (ok) {
             router.patch(`/vouchers/${voucher.id}/desaprobar`, {}, {
                 preserveScroll: true,
                 onSuccess: () => {

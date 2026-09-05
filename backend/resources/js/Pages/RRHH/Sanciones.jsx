@@ -22,6 +22,7 @@ import {
     FileDown 
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 export default function Sanciones({ 
     sanciones = [], 
@@ -29,6 +30,7 @@ export default function Sanciones({
     metrics = { total: 0, apercibimientos: 0, suspensiones: 0, pendientes_firma: 0 }, 
     filters = {} 
 }) {
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'todos');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'todos');
@@ -120,8 +122,14 @@ export default function Sanciones({
     };
 
     // Procesar baja lógica
-    const handleDelete = (item) => {
-        if (confirm(`¿Estás seguro de eliminar el registro disciplinario ${item.code} de ${item.nombre}?`)) {
+    const handleDelete = async (item) => {
+        const ok = await confirm({
+            title: '¿Eliminar este registro disciplinario?',
+            description: `Se eliminará la sanción ${item.code} de ${item.nombre}.`,
+            variant: 'danger',
+            confirmLabel: 'Eliminar',
+        });
+        if (ok) {
             router.delete(`/rrhh/sanciones/${item.id}`);
         }
     };

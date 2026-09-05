@@ -7,8 +7,10 @@ import Modal from '@/Components/UI/Modal';
 import Table from '@/Components/UI/Table';
 import { Eye, Check, Search, FileDown, Fuel, User, Calendar, Hash } from 'lucide-react';
 import { cn } from '@/Utils/cn';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 export default function Combustible({ remitos = [], filters = {} }) {
+    const confirm = useConfirm();
     const currentStatus = filters.status || 'pendiente';
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedRemito, setSelectedRemito] = useState(null);
@@ -61,8 +63,14 @@ export default function Combustible({ remitos = [], filters = {} }) {
         });
     }, [remitos, searchTerm]);
 
-    const handleApprove = (remito) => {
-        if (confirm(`¿Aprobar la rendición de combustible #${remito.remito_code} (${remito.patente})?`)) {
+    const handleApprove = async (remito) => {
+        const ok = await confirm({
+            title: '¿Aprobar la rendición de combustible?',
+            description: `Remito #${remito.remito_code} — patente ${remito.patente}.`,
+            variant: 'success',
+            confirmLabel: 'Aprobar',
+        });
+        if (ok) {
             router.patch(`/combustible/${remito.id}/aprobar`, {}, {
                 preserveScroll: true,
                 onSuccess: () => {

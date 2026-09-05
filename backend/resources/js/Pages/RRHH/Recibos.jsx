@@ -11,6 +11,7 @@ import {
     ChevronLeft, ChevronRight, MoreVertical, Pen, Layers, Loader2,
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 // Períodos disponibles para navegación (Septiembre 2026 es el actual)
 const ALL_MONTHS = [
@@ -61,6 +62,7 @@ export default function Recibos({
     metrics = { total: 0, generados: 0, firmados_empresa: 0, firmados_empleado: 0 },
     filters = {}
 }) {
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm]           = useState(filters.search || '');
     const [statusFilter, setStatusFilter]       = useState(filters.status || 'todos');
     const [selectedRecibo, setSelectedRecibo]   = useState(null);
@@ -148,8 +150,14 @@ export default function Recibos({
         return parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : name.substring(0,2).toUpperCase();
     };
 
-    const handleDelete = (item) => {
-        if (confirm(`¿Eliminar el recibo de ${item.nombre} (${item.period})?`)) {
+    const handleDelete = async (item) => {
+        const ok = await confirm({
+            title: '¿Eliminar este recibo de sueldo?',
+            description: `Se eliminará el recibo de ${item.nombre} correspondiente a ${item.period}.`,
+            variant: 'danger',
+            confirmLabel: 'Eliminar',
+        });
+        if (ok) {
             router.delete(`/rrhh/recibos/${item.id}`, { preserveScroll: true });
         }
     };
@@ -165,14 +173,26 @@ export default function Recibos({
         setIsReassignOpen(true);
     };
 
-    const handleSignSingle = (item) => {
-        if (confirm(`¿Firmar el recibo de ${item.nombre} (${item.period}) como empresa?`)) {
+    const handleSignSingle = async (item) => {
+        const ok = await confirm({
+            title: '¿Firmar este recibo como empresa?',
+            description: `Se registrará la firma de la empresa en el recibo de ${item.nombre} (${item.period}).`,
+            variant: 'success',
+            confirmLabel: 'Firmar',
+        });
+        if (ok) {
             router.post(`/rrhh/recibos/${item.id}/firmar`, {}, { preserveScroll: true });
         }
     };
 
-    const handleNotify = (item) => {
-        if (confirm(`¿Notificar a ${item.nombre} que tiene un recibo pendiente de firma?`)) {
+    const handleNotify = async (item) => {
+        const ok = await confirm({
+            title: '¿Notificar al empleado?',
+            description: `Se enviará un aviso a ${item.nombre} sobre el recibo pendiente de firma (${item.period}).`,
+            variant: 'brand',
+            confirmLabel: 'Notificar',
+        });
+        if (ok) {
             router.post(`/rrhh/recibos/${item.id}/notificar`, {}, { preserveScroll: true });
         }
     };

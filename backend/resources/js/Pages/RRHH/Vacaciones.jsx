@@ -24,6 +24,7 @@ import {
     FileDown
 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 export default function Vacaciones({ 
     licencias = [], 
@@ -31,6 +32,7 @@ export default function Vacaciones({
     metrics = { pendientes: 0, aprobadas: 0, total: 0 }, 
     filters = {} 
 }) {
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || 'todos');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'todos');
@@ -105,8 +107,14 @@ export default function Vacaciones({
     };
 
     // Procesar rechazo
-    const handleReject = (id) => {
-        if (confirm('¿Estás seguro de rechazar esta solicitud de licencia?')) {
+    const handleReject = async (id) => {
+        const ok = await confirm({
+            title: '¿Rechazar esta solicitud?',
+            description: 'La licencia quedará marcada como rechazada.',
+            variant: 'danger',
+            confirmLabel: 'Rechazar',
+        });
+        if (ok) {
             router.patch(`/rrhh/vacaciones/${id}/rechazar`, {}, {
                 preserveScroll: true,
                 onSuccess: () => {

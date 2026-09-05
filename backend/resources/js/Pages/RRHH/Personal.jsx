@@ -23,6 +23,7 @@ import {
     KeyRound,
     RotateCcw,
 } from 'lucide-react';
+import { useConfirm } from '@/Contexts/ConfirmContext';
 
 // Extrae el DNI de un CUIL (20-43942223-9 -> "43942223"), igual que el
 // backend. La contraseña inicial es siempre este valor.
@@ -141,6 +142,7 @@ function AccessFields({ data, errors, setData, excludeUserId = null }) {
 }
 
 export default function Personal({ personal = [], filters = {} }) {
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -265,8 +267,14 @@ export default function Personal({ personal = [], filters = {} }) {
     };
 
     // Restablecer contraseña al DNI
-    const handleResetPassword = (emp) => {
-        if (!confirm(`¿Restablecer la contraseña de ${emp.nombre_completo} a su DNI?`)) return;
+    const handleResetPassword = async (emp) => {
+        const ok = await confirm({
+            title: '¿Restablecer la contraseña?',
+            description: `La contraseña de ${emp.nombre_completo} volverá a ser su número de DNI.`,
+            variant: 'warning',
+            confirmLabel: 'Restablecer',
+        });
+        if (!ok) return;
 
         router.post(`/rrhh/personal/${emp.id}/reset-password`, {}, {
             preserveScroll: true,
@@ -278,8 +286,14 @@ export default function Personal({ personal = [], filters = {} }) {
     };
 
     // Procesar baja lógica
-    const handleDelete = (emp) => {
-        if (confirm(`¿Estás seguro de dar de baja el legajo de ${emp.nombre_completo}?`)) {
+    const handleDelete = async (emp) => {
+        const ok = await confirm({
+            title: '¿Dar de baja este legajo?',
+            description: `${emp.nombre_completo} dejará de figurar como personal activo.`,
+            variant: 'danger',
+            confirmLabel: 'Dar de baja',
+        });
+        if (ok) {
             router.delete(`/rrhh/personal/${emp.id}`);
         }
     };
