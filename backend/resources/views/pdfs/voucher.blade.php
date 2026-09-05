@@ -38,8 +38,8 @@
         }
 
         .logo-cell img {
-            max-height: 55px;
-            max-width: 160px;
+            max-height: 95px;
+            max-width: 260px;
         }
 
         .title-cell {
@@ -265,14 +265,6 @@
                         <div class="data-value">{{ $tiempo_espera }} min</div>
                     </div></div>
                 </td>
-                <td class="signature-col">
-                    <div class="signature-passenger-label">Firma del pasajero</div>
-                    @if($firma_url)
-                        <img src="{{ $firma_url }}" class="signature-passenger-img" alt="Firma">
-                    @else
-                        <div class="signature-placeholder"></div>
-                    @endif
-                </td>
             </tr>
         </table>
 
@@ -284,7 +276,12 @@
                     <div class="footer-label">Monto:</div>
                 </td>
                 <td class="firma-col">
-                    <div class="footer-label">Firma:</div>
+                    @if($firma_url)
+                        <img src="{{ $firma_url }}" class="signature-passenger-img" alt="Firma">
+                    @else
+                        <div class="signature-placeholder"></div>
+                    @endif
+                    <div class="footer-label">Firma del pasajero:</div>
                 </td>
             </tr>
         </table>
