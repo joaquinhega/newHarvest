@@ -285,7 +285,13 @@ export default function Recibos({
             await window.axios.post('/rrhh/recibos/importar-masivo/confirmar', {
                 temp_token: bulkToken,
                 period: bulkPeriod,
-                groups: included.map(g => ({ employee_id: g.employee_id, pages: g.pages })),
+                groups: included.map(g => ({
+                    employee_id: g.employee_id,
+                    pages: g.pages,
+                    gross_amount: g.gross_amount,
+                    deductions_amount: g.deductions_amount,
+                    net_amount: g.net_amount,
+                })),
             });
             setIsBulkOpen(false);
             resetBulk();
@@ -969,6 +975,18 @@ export default function Recibos({
                                                 <option key={emp.id} value={emp.id}>{emp.last_name}, {emp.first_name} — Legajo {emp.id}</option>
                                             ))}
                                         </select>
+                                        {!g.matched && g.detected_name && (
+                                            <p className="text-[10px] text-ink-500 mt-1">
+                                                Leído del PDF: <strong>{g.detected_name}</strong>
+                                                {g.detected_legajo && ` · Legajo liquidador #${g.detected_legajo}`}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="w-24 shrink-0 text-right">
+                                        <p className="text-[10px] text-ink-400 uppercase font-semibold">Neto detectado</p>
+                                        <p className="text-xs text-ink-700 font-mono">
+                                            {g.net_amount ? `$ ${Number(g.net_amount).toLocaleString('es-AR')}` : '—'}
+                                        </p>
                                     </div>
                                     <div className="w-20 shrink-0 text-right">
                                         <p className="text-[10px] text-ink-400 uppercase font-semibold">Páginas</p>

@@ -186,12 +186,15 @@ class SalaryReceiptController extends Controller
     public function confirmBulk(Request $request, SalaryReceiptPdfSplitter $splitter)
     {
         $validated = $request->validate([
-            'temp_token'              => ['required', 'string'],
-            'period'                  => ['required', 'string', 'max:50'],
-            'groups'                  => ['required', 'array', 'min:1'],
-            'groups.*.employee_id'    => ['required', 'exists:employees,id'],
-            'groups.*.pages'          => ['required', 'array', 'min:1'],
-            'groups.*.pages.*'        => ['required', 'integer', 'min:1'],
+            'temp_token'                   => ['required', 'string'],
+            'period'                       => ['required', 'string', 'max:50'],
+            'groups'                       => ['required', 'array', 'min:1'],
+            'groups.*.employee_id'         => ['required', 'exists:employees,id'],
+            'groups.*.pages'               => ['required', 'array', 'min:1'],
+            'groups.*.pages.*'             => ['required', 'integer', 'min:1'],
+            'groups.*.gross_amount'        => ['nullable', 'numeric', 'min:0'],
+            'groups.*.deductions_amount'   => ['nullable', 'numeric', 'min:0'],
+            'groups.*.net_amount'          => ['nullable', 'numeric', 'min:0'],
         ]);
 
         if (! Storage::disk('local')->exists($validated['temp_token'])) {
@@ -209,9 +212,9 @@ class SalaryReceiptController extends Controller
             SalaryReceipt::create([
                 'employee_id'       => $group['employee_id'],
                 'period'            => $validated['period'],
-                'gross_amount'      => 0,
-                'deductions_amount' => 0,
-                'net_amount'        => 0,
+                'gross_amount'      => $group['gross_amount'] ?? 0,
+                'deductions_amount' => $group['deductions_amount'] ?? 0,
+                'net_amount'        => $group['net_amount'] ?? 0,
                 'file_path'         => $fileName,
                 'status'            => 'generado',
                 'borrado'           => false,
