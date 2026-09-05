@@ -35,6 +35,15 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
 
+    const activeCompanyId = filters.company_id || null;
+    const activeCompany = activeCompanyId
+        ? companies.find((c) => String(c.id) === String(activeCompanyId))
+        : null;
+
+    const handleClearCompanyFilter = () => {
+        router.get('/vouchers', { status: currentStatus, search: searchTerm, date_from: dateFrom, date_to: dateTo }, { preserveState: true, replace: true });
+    };
+
     const editForm = useForm({
         company_id: '',
         user_id: '',
@@ -80,6 +89,7 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             search: searchTerm,
             ...(dateFrom ? { date_from: dateFrom } : {}),
             ...(dateTo ? { date_to: dateTo } : {}),
+            ...(activeCompanyId ? { company_id: activeCompanyId } : {}),
         });
         window.location.href = `/vouchers/export/excel?${params.toString()}`;
     };
@@ -167,7 +177,7 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
     return (
         <AuthenticatedLayout
             title="Vouchers"
-            subtitle={`${filteredVouchers.length} vouchers ${currentStatus === 'pendiente' ? 'sin aprobar' : 'aprobados'}`}
+            subtitle={`${filteredVouchers.length} vouchers ${currentStatus === 'pendiente' ? 'sin aprobar' : 'aprobados'}${activeCompany ? ` de ${activeCompany.name}` : ''}`}
             actions={
                 <div className="flex items-center gap-2">
                     <Button 
@@ -207,6 +217,22 @@ export default function Vouchers({ vouchers = [], companies = [], choferes = [],
             </div>
 
             <div className="space-y-4">
+                {activeCompany && (
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded-full">
+                            <Building2 className="w-3.5 h-3.5" />
+                            Empresa: {activeCompany.name}
+                            <button
+                                type="button"
+                                onClick={handleClearCompanyFilter}
+                                className="ml-1 text-brand-500 hover:text-brand-800"
+                                title="Quitar filtro de empresa"
+                            >
+                                ✕
+                            </button>
+                        </span>
+                    </div>
+                )}
                 <div className="bg-white rounded-2xl border border-ink-100 p-3 flex flex-col lg:flex-row lg:items-center gap-3 shadow-sm">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Search className="w-4 h-4 text-ink-500 ml-1 shrink-0" />

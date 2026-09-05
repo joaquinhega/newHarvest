@@ -342,7 +342,7 @@ export default function Empresas({ empresas = [] }) {
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    router.get('/vouchers');
+                                    router.get('/vouchers', { company_id: selectedCompany.id });
                                     setIsDetailOpen(false);
                                     setSelectedCompany(null);
                                 }}
@@ -387,42 +387,7 @@ export default function Empresas({ empresas = [] }) {
                                 </span>
                             </div>
                         </div>
-                        {selectedCompany.vouchers && selectedCompany.vouchers.length > 0 && (
-                            <div className="border-t border-ink-200 pt-4">
-                                <h4 className="text-xs font-bold uppercase text-ink-700 mb-2.5 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-brand-600 rounded-full"></span>
-                                    Últimos Viajes
-                                </h4>
-                                <div className="space-y-2">
-                                    {selectedCompany.vouchers.slice(0, 5).map((voucher) => (
-                                        <div
-                                            key={voucher.id}
-                                            className="p-2 bg-[#FAF9FB] rounded-lg border border-ink-100 flex items-center justify-between text-[11px]"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
-                                                    {voucher.remito_code}
-                                                </span>
-                                                <span className="text-ink-600">
-                                                    {voucher.passenger_name}
-                                                </span>
-                                                <span className="text-ink-400">
-                                                    {voucher.date}
-                                                </span>
-                                            </div>
-                                            <Badge variant={voucher.status === 'aprobado' ? 'Aprobada' : 'Pendiente'}>
-                                                {voucher.status === 'aprobado' ? 'Aprobado' : 'Pendiente'}
-                                            </Badge>
-                                        </div>
-                                    ))}
-                                </div>
-                                {selectedCompany.vouchers.length > 5 && (
-                                    <p className="text-[10px] text-ink-400 mt-2 italic">
-                                        ...y {selectedCompany.vouchers.length - 5} viajes más
-                                    </p>
-                                )}
-                            </div>
-                        )}                    </div>
+                    </div>
                 )}
             </Modal>
         </AuthenticatedLayout>
